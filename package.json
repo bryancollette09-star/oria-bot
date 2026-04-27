@@ -1,0 +1,15 @@
+{
+  "name": "oria-bot",
+  "version": "1.0.0",
+  "description": "ORIA — Le coach IA des femmes OSE Le Cercle",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'static site'"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
