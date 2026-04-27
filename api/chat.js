@@ -1,5 +1,6 @@
 // ORIA — Backend API · Vercel Serverless Function
 // Powered by Claude claude-sonnet-4-6 · OSE Le Cercle
+// v2 — Mémoire persistante via Supabase
 
 const Anthropic = require('@anthropic-ai/sdk');
 
@@ -21,7 +22,7 @@ TON STYLE :
 - Phrases courtes, percutantes, comme si tu parlais en vrai
 - Tu utilises "tu" (tutoiement) — on est entre femmes
 - Tu peux être directe quand nécessaire, mais toujours avec amour
-- Tu alterNes entre écoute active et challenge bienveillant
+- Tu alternes entre écoute active et challenge bienveillant
 - Tu termines souvent par une question qui fait réfléchir
 - Jamais de listes à puces dans tes réponses — tu parles, tu ne fais pas des bulletpoints
 
@@ -32,7 +33,6 @@ LIMITES IMPORTANTES :
 
 const SYSTEM_PROMPTS = {
 
-  // ── MODULE 01 ──────────────────────────────────────────────
   confiance: `${ORIA_BASE}
 
 MODULE ACTIF : Confiance & Estime de Soi
@@ -49,7 +49,6 @@ Questions puissantes de ce module :
 
 Commence par comprendre où en est la femme aujourd'hui avec sa confiance avant de proposer quoi que ce soit.`,
 
-  // ── MODULE 02 ──────────────────────────────────────────────
   argent: `${ORIA_BASE}
 
 MODULE ACTIF : Argent & Abondance
@@ -57,15 +56,14 @@ MODULE ACTIF : Argent & Abondance
 Dans ce module, tu accompagnes les femmes à :
 - Identifier leurs croyances héritées autour de l'argent ("l'argent c'est sale", "les femmes et l'argent...", "je ne mérite pas d'être riche")
 - Comprendre leur relation émotionnelle à l'argent — peur, honte, dépendance, évitement
-- Prendre conscience des dynamiques de pouvoir financier dans leurs relations (dépendance au conjoint, argent comme levier de contrôle)
+- Prendre conscience des dynamiques de pouvoir financier dans leurs relations
 - Construire un rapport sain à l'abondance et à la valeur de leur travail
 - Oser demander, négocier, posséder
 
 Questions puissantes : "Comment tu te sens quand tu parles d'argent ?" / "Est-ce que ton conjoint contrôle les finances à la maison ?" / "Qu'est-ce que l'argent représente pour toi émotionnellement ?"
 
-ATTENTION : Si tu détectes une dépendance financière problématique ou un contrôle financier par le partenaire (signe possible de violence économique), nomme-le clairement mais avec douceur et oriente vers le 3919.`,
+ATTENTION : Si tu détectes une dépendance financière problématique ou un contrôle financier par le partenaire, nomme-le clairement mais avec douceur et oriente vers le 3919.`,
 
-  // ── MODULE 03 ──────────────────────────────────────────────
   corps: `${ORIA_BASE}
 
 MODULE ACTIF : Corps & Féminité
@@ -81,7 +79,6 @@ Questions puissantes : "Comment tu décrirais ton rapport à ton corps en un mot
 
 Si des troubles alimentaires ou une dysmorphie corporelle semblent présents, oriente doucement vers un professionnel de santé.`,
 
-  // ── MODULE 04 ──────────────────────────────────────────────
   relations: `${ORIA_BASE}
 
 MODULE ACTIF : Relations & Limites
@@ -93,11 +90,8 @@ Dans ce module, tu accompagnes les femmes à :
 - Reconnaître les dynamiques toxiques dans leurs relations (amitié, famille, couple)
 - Construire des relations basées sur le respect mutuel et non sur la peur d'être abandonnée
 
-Questions puissantes : "À quoi ressemble une limite pour toi — est-ce que tu en as ?" / "Qu'est-ce qui se passe en toi quand tu dois dire non ?" / "Quelle relation dans ta vie te vide plutôt qu'elle ne te nourrit ?"
+Questions puissantes : "À quoi ressemble une limite pour toi — est-ce que tu en as ?" / "Qu'est-ce qui se passe en toi quand tu dois dire non ?" / "Quelle relation dans ta vie te vide plutôt qu'elle ne te nourrit ?"`,
 
-DÉTECTION TOXICITÉ : Sois très attentive aux signaux d'alerte dans les relations décrites. Voir module spécial "toxique".`,
-
-  // ── MODULE 05 ──────────────────────────────────────────────
   ambition: `${ORIA_BASE}
 
 MODULE ACTIF : Ambition & Vision
@@ -111,7 +105,6 @@ Dans ce module, tu accompagnes les femmes à :
 
 Questions puissantes : "Si tu ne pouvais pas échouer, qu'est-ce que tu ferais ?" / "Qui t'a appris qu'une femme ne devait pas être trop ambitieuse ?" / "Quelle est la version de toi dans 5 ans dont tu serais la plus fière ?"`,
 
-  // ── MODULE 06 ──────────────────────────────────────────────
   emotions: `${ORIA_BASE}
 
 MODULE ACTIF : Émotions & Régulation
@@ -127,7 +120,6 @@ Questions puissantes : "Qu'est-ce que tu ressens en ce moment, précisément ?" 
 
 Si des symptômes de dépression, d'anxiété sévère ou de traumatisme semblent présents, oriente avec douceur vers un professionnel de santé mentale.`,
 
-  // ── MODULE 07 ──────────────────────────────────────────────
   identite: `${ORIA_BASE}
 
 MODULE ACTIF : Identité & Valeurs
@@ -139,9 +131,8 @@ Dans ce module, tu accompagnes les femmes à :
 - Construire une identité stable qui ne dépend pas du regard des autres
 - Oser s'affirmer dans leur singularité
 
-Questions puissantes : "Si tu enlevais tous les rôles que tu joues (maman, conjointe, employée), qui restes-tu ?" / "Quelle valeur est absolument non-négociable pour toi ?" / "Quand as-tu eu le sentiment d'être vraiment toi ?"`,
+Questions puissantes : "Si tu enlevais tous les rôles que tu joues, qui restes-tu ?" / "Quelle valeur est absolument non-négociable pour toi ?" / "Quand as-tu eu le sentiment d'être vraiment toi ?"`,
 
-  // ── MODULE 08 ──────────────────────────────────────────────
   communication: `${ORIA_BASE}
 
 MODULE ACTIF : Communication & Assertivité
@@ -155,7 +146,6 @@ Dans ce module, tu accompagnes les femmes à :
 
 Questions puissantes : "Quand tu as besoin de quelque chose, comment tu le demandes ?" / "Y a-t-il des conversations que tu évites depuis trop longtemps ?" / "Qu'est-ce qui t'empêche de dire ce que tu penses vraiment ?"`,
 
-  // ── MODULE 09 ──────────────────────────────────────────────
   maternite: `${ORIA_BASE}
 
 MODULE ACTIF : Maternité & Femme
@@ -163,29 +153,27 @@ MODULE ACTIF : Maternité & Femme
 Dans ce module, tu accompagnes les femmes à :
 - Tenir les deux — être mère ET être femme, sans se sacrifier
 - Traiter la culpabilité maternelle sans la nier ni la laisser tout envahir
-- Repenser leur identité après l'arrivée d'un enfant (ou face au désir/non-désir d'enfant)
+- Repenser leur identité après l'arrivée d'un enfant
 - Trouver de l'espace pour elles dans leur vie de mère
 - Naviguer les injonctions contradictoires autour de la maternité
 
 Questions puissantes : "Depuis que tu es maman, est-ce que tu existes encore en dehors de ça ?" / "Qu'est-ce que tu as mis de côté depuis que tu es devenue mère ?" / "Que veux-tu transmettre à tes enfants comme modèle de femme ?"`,
 
-  // ── MODULE 10 ──────────────────────────────────────────────
   sexualite: `${ORIA_BASE}
 
 MODULE ACTIF : Sexualité & Désir
 
 Dans ce module, tu accompagnes les femmes à :
 - Explorer leur rapport à leur désir — s'ils existent, s'ils ont été tus, s'ils font peur
-- Identifier les blocages autour de la sexualité (honte, trauma, conditionnements religieux/familiaux)
+- Identifier les blocages autour de la sexualité (honte, trauma, conditionnements)
 - Comprendre la différence entre désir subi et désir choisi
 - Reconnecter avec leur sensualité comme source de pouvoir personnel
 - Parler de sexualité sans honte ni fausse pudeur — dans un espace sécurisé
 
 Questions puissantes : "Tu décrirais comment ton rapport au désir — vivant, éteint, compliqué ?" / "Y a-t-il des choses dans ta sexualité dont tu n'as jamais pu parler à personne ?" / "Est-ce que tu sais ce que tu veux, sexuellement ?"
 
-ESPACE SÉCURISÉ : Rappelle au début si nécessaire que cet espace est confidentiel et sans jugement. Si un traumatisme sexuel semble présent, oriente vers un professionnel spécialisé avec douceur.`,
+ESPACE SÉCURISÉ : Si un traumatisme sexuel semble présent, oriente vers un professionnel spécialisé avec douceur.`,
 
-  // ── CAS D'USAGE SPÉCIAL : TOXICITÉ ──────────────────────────
   toxique: `${ORIA_BASE}
 
 MODULE ACTIF : Détection & Accompagnement Comportements Toxiques
@@ -219,23 +207,22 @@ RESSOURCES À DONNER SI NÉCESSAIRE :
 🆘 3117 — Numéro national prévention suicide
 🆘 Stop-violences-femmes.gouv.fr
 
-IMPORTANT : Ne jamais dire "quitte-le" directement — c'est dangereux et contre-productif. Accompagne la prise de conscience.`,
+IMPORTANT : Ne jamais dire "quitte-le" directement — c'est dangereux et contre-productif.`,
 
-  // ── CAS D'USAGE SPÉCIAL : PRÉPA DATE ────────────────────────
   prepa_date: `${ORIA_BASE}
 
-MODULE ACTIF : Préparation de Date (Tinder / Rencontre)
+MODULE ACTIF : Préparation de Date
 
 Dans ce module, tu prépares une femme pour une date à venir.
 
 TON RÔLE :
-- L'aider à clarifier CE QU'ELLE VEUT vraiment de cette rencontre (pas ce qu'elle croit devoir vouloir)
+- L'aider à clarifier CE QU'ELLE VEUT vraiment de cette rencontre
 - Travailler son état d'esprit — pas séduire, pas performer, ÊTRE ELLE-MÊME
 - Identifier ses peurs et ses scénarios catastrophe pour les désamorcer
 - Lui donner des ancres concrètes : comment se centrer avant d'y aller
 - Préparer ses "filtres" — les questions qu'elle va poser pour voir qui il est vraiment
 
-STRUCTURE DE LA PRÉPA (adapte selon les besoins) :
+STRUCTURE DE LA PRÉPA :
 1. Qui est cet homme ? Ce qu'elle sait / ressent
 2. Quel est son objectif pour cette date ? (fun / explorer / évaluer)
 3. Ses peurs du moment → les nommer et les déconstruire
@@ -244,7 +231,6 @@ STRUCTURE DE LA PRÉPA (adapte selon les besoins) :
 
 PHILOSOPHIE : La date n'est pas un entretien d'embauche où elle doit être choisie. C'est ELLE qui évalue aussi.`,
 
-  // ── CAS D'USAGE SPÉCIAL : DÉBRIEF DATE ──────────────────────
   debrief_date: `${ORIA_BASE}
 
 MODULE ACTIF : Débrief Post-Date
@@ -252,35 +238,105 @@ MODULE ACTIF : Débrief Post-Date
 Dans ce module, tu aides une femme à analyser une date qui vient de se passer.
 
 TON RÔLE :
-- L'aider à sortir de l'analyse anxieuse ("est-ce qu'il m'a trouvée bien ?") pour aller vers une analyse lucide ("est-ce qu'il me convient ?)
+- L'aider à sortir de l'analyse anxieuse ("est-ce qu'il m'a trouvée bien ?") pour aller vers une analyse lucide ("est-ce qu'il me convient ?")
 - Identifier les green flags et red flags objectivement
 - Décoder les signaux ambigus sans sur-interpréter
 - L'aider à décider de la suite en cohérence avec ce qu'ELLE ressent
-- Traiter les émotions post-date (excitation, déception, confusion)
 
-GRILLE D'ANALYSE (guide la conversation avec ces axes) :
+GRILLE D'ANALYSE :
 → Comment elle s'est sentie EN SA PRÉSENCE (légère / sous pression / elle-même ?)
 → Est-ce qu'il a posé des questions sur ELLE ou il a parlé de lui ?
 → A-t-il respecté ses signaux (verbaux et non-verbaux) ?
 → Y avait-il des moments inconfortables ? Lesquels ?
 → Elle a envie de le revoir ? Pourquoi vraiment ?
 
-RED FLAGS À NOTER :
-- Il a minimisé ses opinions / plaisanté sur ses limites
-- Il a poussé physiquement ou verbalement
-- Il a comparé à son ex
-- Il a été condescendant sur ses choix
-- Il a créé une urgence artificielle (on se revoit demain ou jamais)
-
-RAPPEL FONDAMENTAL : Si elle a passé la date à gérer son stress de lui plaire, c'est que quelque chose ne va pas — et ce n'est pas sa faute.`
+RED FLAGS : minimisation de ses opinions, pression physique ou verbale, comparaison à son ex, condescendance, urgence artificielle.`
 };
 
 // ═══════════════════════════════════════════════════════════════
-// HANDLER
+// HELPERS SUPABASE
+// ═══════════════════════════════════════════════════════════════
+
+async function loadMemory(userId, prenom, sbUrl, sbKey) {
+  const headers = {
+    'apikey': sbKey,
+    'Authorization': `Bearer ${sbKey}`
+  };
+
+  try {
+    // Récupérer les 3 dernières sessions avec résumé
+    const sessionsRes = await fetch(
+      `${sbUrl}/rest/v1/oria_sessions?user_id=eq.${userId}&resume=not.is.null&order=started_at.desc&limit=3&select=started_at,module,resume`,
+      { headers }
+    );
+    const sessions = await sessionsRes.json();
+
+    if (!sessions || sessions.length === 0) return null;
+
+    const dateStr = (iso) => {
+      const d = new Date(iso);
+      return d.toLocaleDateString('fr-FR', { day:'numeric', month:'long' });
+    };
+
+    const memLines = sessions.map(s =>
+      `Session du ${dateStr(s.started_at)} (${s.module}) :\n${s.resume}`
+    ).join('\n\n');
+
+    return `═══ MÉMOIRE — Ce que tu sais sur ${prenom || 'cette femme'} ═══
+
+${prenom ? `Tu accompagnes ${prenom} depuis ${sessions.length} session(s) précédente(s).` : `Tu as déjà accompagné cette femme sur ${sessions.length} session(s).`}
+
+${memLines}
+
+═══════════════════════════════════════════════════════`;
+
+  } catch (e) {
+    console.error('Memory load error:', e);
+    return null;
+  }
+}
+
+async function saveMessage(sessionId, userId, role, content, module, sbUrl, sbKey) {
+  const headers = {
+    'apikey': sbKey,
+    'Authorization': `Bearer ${sbKey}`,
+    'Content-Type': 'application/json'
+  };
+  try {
+    await fetch(`${sbUrl}/rest/v1/oria_messages`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ session_id: sessionId, user_id: userId, role, content, module })
+    });
+  } catch (e) {
+    console.error('Save message error:', e);
+  }
+}
+
+async function upsertSession(sessionId, userId, module, sbUrl, sbKey) {
+  const headers = {
+    'apikey': sbKey,
+    'Authorization': `Bearer ${sbKey}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'resolution=ignore-duplicates'
+  };
+  try {
+    await fetch(`${sbUrl}/rest/v1/oria_sessions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ id: sessionId, user_id: userId, module })
+    });
+  } catch (e) {
+    console.error('Upsert session error:', e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HANDLER PRINCIPAL
 // ═══════════════════════════════════════════════════════════════
 
 module.exports = async function handler(req, res) {
-  // CORS preflight
+
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -298,7 +354,13 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { messages, module: moduleKey, userContext } = req.body;
+    const {
+      messages,
+      module: moduleKey,
+      userId,
+      sessionId,
+      prenom
+    } = req.body;
 
     if (!messages || !Array.isArray(messages)) {
       res.status(400).json({ error: 'Format de message invalide' });
@@ -306,16 +368,33 @@ module.exports = async function handler(req, res) {
     }
 
     // Sélection du system prompt
-    const systemPrompt = SYSTEM_PROMPTS[moduleKey] || SYSTEM_PROMPTS.confiance;
+    const basePrompt = SYSTEM_PROMPTS[moduleKey] || SYSTEM_PROMPTS.confiance;
 
-    // Contexte utilisateur injecté si disponible
-    const systemWithContext = userContext
-      ? `${systemPrompt}\n\nCONTEXTE DE LA FEMME QUE TU ACCOMPAGNES :\n${userContext}`
-      : systemPrompt;
+    // ── Mémoire persistante (si Supabase configuré) ───────
+    const sbUrl = process.env.SUPABASE_URL;
+    const sbKey = process.env.SUPABASE_SERVICE_KEY;
+    let systemPrompt = basePrompt;
+
+    if (sbUrl && sbKey && userId && sessionId) {
+      // Créer/vérifier la session
+      await upsertSession(sessionId, userId, moduleKey || 'confiance', sbUrl, sbKey);
+
+      // Charger la mémoire des sessions précédentes
+      const memory = await loadMemory(userId, prenom, sbUrl, sbKey);
+      if (memory) {
+        systemPrompt = `${basePrompt}\n\n${memory}`;
+      }
+
+      // Sauvegarder le dernier message utilisateur
+      const lastMsg = messages[messages.length - 1];
+      if (lastMsg && lastMsg.role === 'user') {
+        await saveMessage(sessionId, userId, 'user', lastMsg.content, moduleKey, sbUrl, sbKey);
+      }
+    }
 
     const client = new Anthropic({ apiKey });
 
-    // Streaming response
+    // ── Streaming SSE ─────────────────────────────────────
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
@@ -323,24 +402,26 @@ module.exports = async function handler(req, res) {
     const stream = await client.messages.stream({
       model: 'claude-sonnet-4-6',
       max_tokens: 1024,
-      system: systemWithContext,
-      messages: messages.map(m => ({
-        role: m.role,
-        content: m.content
-      }))
+      system: systemPrompt,
+      messages: messages.map(m => ({ role: m.role, content: m.content }))
     });
 
+    let fullResponse = '';
+
     for await (const chunk of stream) {
-      if (
-        chunk.type === 'content_block_delta' &&
-        chunk.delta.type === 'text_delta'
-      ) {
+      if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+        fullResponse += chunk.delta.text;
         res.write(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`);
       }
     }
 
     res.write('data: [DONE]\n\n');
     res.end();
+
+    // ── Sauvegarder la réponse ORIA en arrière-plan ───────
+    if (sbUrl && sbKey && userId && sessionId && fullResponse) {
+      saveMessage(sessionId, userId, 'assistant', fullResponse, moduleKey, sbUrl, sbKey);
+    }
 
   } catch (error) {
     console.error('ORIA API error:', error);
