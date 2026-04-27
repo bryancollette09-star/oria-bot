@@ -520,9 +520,203 @@ html, body { height:100%; background:var(--noir); color:var(--creme); font-famil
 ::-webkit-scrollbar { width:4px; }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:var(--or-border); border-radius:2px; }
+
+/* ═══════════════════════════════════════════════════════════
+   LOGIN OVERLAY
+═══════════════════════════════════════════════════════════ */
+.login-overlay {
+  position:fixed;
+  inset:0;
+  background:var(--noir);
+  z-index:1000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.login-overlay.hidden { display:none; }
+
+.login-card {
+  width:100%;
+  max-width:420px;
+  text-align:center;
+  animation:fadeInUp .5s ease;
+}
+.login-logo {
+  font-family:'Cormorant Garamond',serif;
+  font-size:3.5rem;
+  font-weight:700;
+  font-style:italic;
+  background:linear-gradient(135deg,#7A5510,#D4AF37 40%,#F7E080 60%,#D4AF37);
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+  letter-spacing:.08em;
+  line-height:1;
+}
+.login-circle {
+  width:90px; height:90px;
+  border-radius:50%;
+  border:1.5px solid rgba(212,175,55,.35);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:0 auto 28px;
+  position:relative;
+}
+.login-circle::before {
+  content:'';
+  position:absolute;
+  inset:-8px;
+  border-radius:50%;
+  border:1px solid rgba(212,175,55,.12);
+}
+.login-tagline {
+  font-size:.65rem;
+  font-weight:500;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--texte-dim);
+  margin:6px 0 36px;
+}
+.login-title {
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.4rem;
+  font-weight:600;
+  font-style:italic;
+  color:var(--or-blanc);
+  margin-bottom:8px;
+}
+.login-sub {
+  font-size:.72rem;
+  color:var(--texte-dim);
+  line-height:1.6;
+  margin-bottom:28px;
+}
+
+.login-field {
+  margin-bottom:14px;
+  text-align:left;
+}
+.login-field label {
+  display:block;
+  font-size:.6rem;
+  font-weight:600;
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  color:var(--texte-dim);
+  margin-bottom:6px;
+}
+.login-field input {
+  width:100%;
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--or-border);
+  border-radius:8px;
+  padding:12px 16px;
+  color:var(--creme);
+  font-size:.85rem;
+  font-family:'Jost',sans-serif;
+  outline:none;
+  transition:border-color .2s;
+}
+.login-field input:focus { border-color:rgba(212,175,55,.5); }
+.login-field input::placeholder { color:var(--texte-dim); }
+
+.login-btn {
+  width:100%;
+  padding:14px;
+  background:linear-gradient(135deg,rgba(212,175,55,.2),rgba(212,175,55,.12));
+  border:1px solid rgba(212,175,55,.4);
+  border-radius:8px;
+  color:var(--or-blanc);
+  font-family:'Jost',sans-serif;
+  font-size:.78rem;
+  font-weight:600;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  cursor:pointer;
+  margin-top:6px;
+  transition:all .25s;
+}
+.login-btn:hover { background:linear-gradient(135deg,rgba(212,175,55,.3),rgba(212,175,55,.18)); border-color:var(--or); }
+.login-btn:disabled { opacity:.5; cursor:not-allowed; }
+
+.login-note {
+  font-size:.58rem;
+  color:var(--texte-dim);
+  margin-top:20px;
+  line-height:1.6;
+}
+.login-error {
+  background:rgba(200,60,60,.1);
+  border:1px solid rgba(200,60,60,.25);
+  border-radius:6px;
+  padding:10px 14px;
+  font-size:.68rem;
+  color:rgba(240,180,180,.9);
+  margin-top:12px;
+  display:none;
+}
+.login-error.show { display:block; }
+
+/* User chip in topbar */
+.topbar__user {
+  display:flex;
+  align-items:center;
+  gap:7px;
+  background:var(--or-glow);
+  border:1px solid var(--or-border);
+  border-radius:20px;
+  padding:5px 12px 5px 8px;
+  cursor:pointer;
+  transition:all .2s;
+}
+.topbar__user:hover { border-color:rgba(212,175,55,.3); }
+.topbar__user-dot { width:7px; height:7px; border-radius:50%; background:#7ddd88; }
+.topbar__user-name { font-size:.62rem; color:var(--texte-dim); font-weight:500; }
 </style>
 </head>
 <body>
+
+<!-- ═══════════════════════════════════════════════
+     LOGIN OVERLAY
+═══════════════════════════════════════════════ -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+
+    <div class="login-circle">
+      <div class="login-logo">O</div>
+    </div>
+    <div class="login-tagline">Ton coach IA · OSE Le Cercle</div>
+
+    <div id="loginStep1">
+      <div class="login-title">Bienvenue dans ton espace</div>
+      <div class="login-sub">Entre ton adresse email pour accéder à ORIA.<br>Ton historique de coaching sera sauvegardé.</div>
+
+      <div class="login-field">
+        <label>Adresse email</label>
+        <input type="email" id="loginEmail" placeholder="ton@email.com" autocomplete="email" />
+      </div>
+
+      <button class="login-btn" id="loginBtn" onclick="handleEmailLogin()">Continuer →</button>
+      <div class="login-error" id="loginError"></div>
+      <div class="login-note">🔒 Espace confidentiel · Tes données restent privées · Tu peux les supprimer à tout moment</div>
+    </div>
+
+    <div id="loginStep2" style="display:none">
+      <div class="login-title">Comment tu t'appelles ?</div>
+      <div class="login-sub">ORIA s'adressera à toi par ton prénom.</div>
+
+      <div class="login-field">
+        <label>Ton prénom</label>
+        <input type="text" id="loginPrenom" placeholder="Ton prénom" autocomplete="given-name" />
+      </div>
+
+      <button class="login-btn" id="prenomBtn" onclick="handlePrenomSubmit()">Commencer →</button>
+    </div>
+
+  </div>
+</div>
 
 <div class="app">
 
@@ -656,6 +850,10 @@ html, body { height:100%; background:var(--noir); color:var(--creme); font-famil
         <div class="topbar__module-name" id="topbarName">Confiance & Estime de Soi</div>
         <div class="topbar__module-desc" id="topbarDesc">Module 01 · Croyances limitantes · Valeur personnelle · Légitimité</div>
       </div>
+      <div class="topbar__user" id="topbarUser" onclick="showLogout()" title="Se déconnecter" style="display:none">
+        <div class="topbar__user-dot"></div>
+        <span class="topbar__user-name" id="topbarUserName">·</span>
+      </div>
       <button class="topbar__new-btn" onclick="newChat()">Nouvelle conv.</button>
     </div>
 
@@ -700,6 +898,187 @@ html, body { height:100%; background:var(--noir); color:var(--creme); font-famil
 </div>
 
 <script>
+// ═══════════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════════
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AUTH & SESSION STATE
+// ═══════════════════════════════════════════════════════════════
+let oriaUser = null;     // { userId, prenom, email }
+let sessionId  = null;   // UUID par onglet (sessionStorage)
+
+function loadUserFromStorage() {
+  try {
+    const stored = localStorage.getItem('oria_user');
+    if (stored) oriaUser = JSON.parse(stored);
+  } catch(e) { oriaUser = null; }
+}
+
+function saveUserToStorage(user) {
+  oriaUser = user;
+  localStorage.setItem('oria_user', JSON.stringify(user));
+}
+
+function initSession() {
+  sessionId = sessionStorage.getItem('oria_session');
+  if (!sessionId) {
+    sessionId = generateUUID();
+    sessionStorage.setItem('oria_session', sessionId);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LOGIN FLOW
+// ═══════════════════════════════════════════════════════════════
+async function handleEmailLogin() {
+  const emailInput = document.getElementById('loginEmail');
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('loginError');
+  const email = emailInput.value.trim();
+
+  if (!email || !email.includes('@')) {
+    showError(errEl, 'Entre une adresse email valide.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Connexion…';
+  errEl.classList.remove('show');
+
+  try {
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Erreur');
+
+    if (data.isNew) {
+      // Nouvelle utilisatrice — demander le prénom
+      document.getElementById('loginStep1').style.display = 'none';
+      document.getElementById('loginStep2').style.display = 'block';
+      document.getElementById('loginPrenom').focus();
+      // Stocker temporairement
+      window._pendingAuth = { userId: data.userId, email };
+    } else {
+      // Utilisatrice existante
+      saveUserToStorage({ userId: data.userId, prenom: data.prenom || '', email });
+      enterChat();
+    }
+
+  } catch(err) {
+    showError(errEl, err.message || 'Erreur de connexion — réessaie.');
+    btn.disabled = false;
+    btn.textContent = 'Continuer →';
+  }
+}
+
+async function handlePrenomSubmit() {
+  const prenomInput = document.getElementById('loginPrenom');
+  const btn = document.getElementById('prenomBtn');
+  const prenom = prenomInput.value.trim();
+
+  if (!prenom) { prenomInput.focus(); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Démarrage…';
+
+  const { userId, email } = window._pendingAuth || {};
+
+  // Mettre à jour le prénom via auth
+  try {
+    await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, prenom })
+    });
+  } catch(e) {}
+
+  saveUserToStorage({ userId, prenom, email });
+  enterChat();
+}
+
+function enterChat() {
+  document.getElementById('loginOverlay').classList.add('hidden');
+  initSession();
+  updateTopbarUser();
+  newChat();
+}
+
+function updateTopbarUser() {
+  if (!oriaUser) return;
+  const name = oriaUser.prenom || oriaUser.email?.split('@')[0] || 'Moi';
+  document.getElementById('topbarUserName').textContent = name;
+  document.getElementById('topbarUser').style.display = 'flex';
+}
+
+function showLogout() {
+  if (confirm(`Se déconnecter ?\n\nTon historique reste sauvegardé.`)) {
+    localStorage.removeItem('oria_user');
+    sessionStorage.removeItem('oria_session');
+    oriaUser = null;
+    sessionId = null;
+    document.getElementById('topbarUser').style.display = 'none';
+    document.getElementById('loginOverlay').classList.remove('hidden');
+    document.getElementById('loginStep1').style.display = 'block';
+    document.getElementById('loginStep2').style.display = 'none';
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginBtn').disabled = false;
+    document.getElementById('loginBtn').textContent = 'Continuer →';
+  }
+}
+
+function showError(el, msg) {
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RÉSUMÉ FIN DE SESSION
+// ═══════════════════════════════════════════════════════════════
+async function triggerSummary() {
+  if (!oriaUser?.userId || !sessionId || messageCount < 2) return;
+  try {
+    const payload = JSON.stringify({ sessionId, userId: oriaUser.userId });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon('/api/summary', new Blob([payload], { type: 'application/json' }));
+    } else {
+      await fetch('/api/summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        keepalive: true
+      });
+    }
+  } catch(e) {}
+}
+
+window.addEventListener('beforeunload', triggerSummary);
+
+// Déclencher aussi après 10 messages échangés
+function checkAutoSummary() {
+  if (messageCount > 0 && messageCount % 10 === 0) {
+    // Renouveler la session après 10 messages
+    const oldSession = sessionId;
+    sessionId = generateUUID();
+    sessionStorage.setItem('oria_session', sessionId);
+    fetch('/api/summary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: oldSession, userId: oriaUser?.userId })
+    }).catch(() => {});
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════════
@@ -779,14 +1158,18 @@ function newChat() {
   const starters = STARTERS[currentModule] || [];
   const meta = MODULE_META[currentModule];
 
+  const prenom = oriaUser?.prenom || '';
+  const welcomeTitle = prenom ? `Je t'écoute, ${prenom}` : 'Je t\'écoute';
+  const welcomeSub = `Tu es dans l'espace <strong>${meta.name}</strong>.<br>Dis-moi ce qui se passe pour toi.`;
+
   welcome.innerHTML = `
     <div class="welcome__circle">
       <span class="welcome__circle-inner">O</span>
     </div>
-    <div class="welcome__title">Je t'écoute</div>
-    <div class="welcome__subtitle">Tu es dans l'espace <strong>${meta.name}</strong>.<br>Dis-moi ce qui se passe pour toi.</div>
+    <div class="welcome__title">${welcomeTitle}</div>
+    <div class="welcome__subtitle">${welcomeSub}</div>
     <div class="welcome__starters">
-      ${starters.map(s => `<button class="starter-btn" onclick="sendStarter('${s}')">${s}</button>`).join('')}
+      ${starters.map(s => `<button class="starter-btn" onclick="sendStarter('${s.replace(/'/g, "&#39;")}')">${s}</button>`).join('')}
     </div>
   `;
   area.appendChild(welcome);
@@ -834,7 +1217,10 @@ async function sendMessage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         messages,
-        module: currentModule
+        module: currentModule,
+        userId:    oriaUser?.userId  || null,
+        sessionId: sessionId         || null,
+        prenom:    oriaUser?.prenom  || null
       })
     });
 
@@ -888,6 +1274,7 @@ async function sendMessage() {
   isStreaming = false;
   document.getElementById('sendBtn').disabled = false;
   input.focus();
+  checkAutoSummary();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -969,7 +1356,25 @@ document.getElementById('userInput').addEventListener('keydown', function(e) {
 });
 
 // ── Init ──────────────────────────────────────────────────────
-newChat();
+loadUserFromStorage();
+if (oriaUser?.userId) {
+  // Utilisatrice connue — accès direct
+  document.getElementById('loginOverlay').classList.add('hidden');
+  initSession();
+  updateTopbarUser();
+  newChat();
+} else {
+  // Afficher l'écran de login
+  document.getElementById('loginEmail')?.focus();
+}
+
+// Enter pour le login
+document.getElementById('loginEmail')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleEmailLogin();
+});
+document.getElementById('loginPrenom')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') handlePrenomSubmit();
+});
 </script>
 
 <style>
