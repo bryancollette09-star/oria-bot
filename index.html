@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ORIA — Ton Coach IA · OSE Le Cercle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════
+   RESET & VARIABLES
+═══════════════════════════════════════════════════════════ */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --noir:      #080604;
+  --brun:      #130C05;
+  --brun2:     #1C1105;
+  --or-ombre:  #5C3F0D;
+  --or-pale:   #C8A84B;
+  --or:        #D4AF37;
+  --or-vif:    #EAC84A;
+  --or-blanc:  #FFF6D0;
+  --creme:     #F0E8D5;
+  --texte:     rgba(240,232,213,0.8);
+  --texte-dim: rgba(240,232,213,0.4);
+  --or-border: rgba(212,175,55,0.18);
+  --or-glow:   rgba(212,175,55,0.08);
+}
+html, body { height:100%; background:var(--noir); color:var(--creme); font-family:'Jost',sans-serif; overflow:hidden; }
+
+/* ═══════════════════════════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════════════════════════ */
+.app {
+  display:grid;
+  grid-template-columns: 280px 1fr;
+  height:100vh;
+}
+@media(max-width:768px){
+  .app { grid-template-columns:1fr; }
+  .sidebar { display:none; }
+  .sidebar.open { display:flex; position:fixed; inset:0; z-index:100; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════════════════════ */
+.sidebar {
+  background:var(--brun);
+  border-right:1px solid var(--or-border);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+.sidebar__header {
+  padding:28px 20px 20px;
+  border-bottom:1px solid var(--or-border);
+  flex-shrink:0;
+}
+.oria-logo {
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.8rem;
+  font-weight:700;
+  font-style:italic;
+  background:linear-gradient(135deg,#7A5510,#D4AF37 40%,#F7E080 60%,#D4AF37);
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+  letter-spacing:.05em;
+}
+.oria-tagline {
+  font-size:.58rem;
+  font-weight:500;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--texte-dim);
+  margin-top:3px;
+}
+
+.sidebar__label {
+  font-size:.5rem;
+  font-weight:700;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--texte-dim);
+  padding:16px 20px 8px;
+  flex-shrink:0;
+}
+
+.modules-list {
+  flex:1;
+  overflow-y:auto;
+  padding:0 10px 10px;
+  scrollbar-width:thin;
+  scrollbar-color:var(--or-border) transparent;
+}
+.module-btn {
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  background:transparent;
+  border:1px solid transparent;
+  border-radius:6px;
+  cursor:pointer;
+  text-align:left;
+  transition:all .2s;
+  margin-bottom:3px;
+  color:var(--texte);
+}
+.module-btn:hover { background:var(--or-glow); border-color:var(--or-border); }
+.module-btn.active {
+  background:rgba(212,175,55,.1);
+  border-color:rgba(212,175,55,.3);
+}
+.module-btn__icon { font-size:1rem; flex-shrink:0; width:22px; text-align:center; }
+.module-btn__info { flex:1; }
+.module-btn__name {
+  font-size:.7rem;
+  font-weight:600;
+  color:var(--creme);
+  display:block;
+}
+.module-btn.active .module-btn__name { color:var(--or-vif); }
+.module-btn__desc {
+  font-size:.55rem;
+  color:var(--texte-dim);
+  display:block;
+  margin-top:1px;
+}
+
+.sidebar__divider {
+  height:1px;
+  background:var(--or-border);
+  margin:8px 10px;
+  flex-shrink:0;
+}
+
+.sidebar__footer {
+  padding:16px 20px;
+  flex-shrink:0;
+  border-top:1px solid var(--or-border);
+}
+.access-badge {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:rgba(212,175,55,.07);
+  border:1px solid rgba(212,175,55,.2);
+  border-radius:6px;
+  padding:8px 12px;
+}
+.access-badge__dot { width:6px; height:6px; border-radius:50%; background:#7ddd88; flex-shrink:0; }
+.access-badge__text { font-size:.58rem; color:var(--texte-dim); }
+.access-badge__text strong { color:var(--or-pale); font-weight:600; }
+
+/* ═══════════════════════════════════════════════════════════
+   MAIN CHAT
+═══════════════════════════════════════════════════════════ */
+.main {
+  display:flex;
+  flex-direction:column;
+  background:var(--noir);
+  overflow:hidden;
+  position:relative;
+}
+
+/* Ambient background glow */
+.main::before {
+  content:'';
+  position:absolute;
+  top:-100px; left:50%; transform:translateX(-50%);
+  width:600px; height:400px;
+  background:radial-gradient(ellipse,rgba(212,175,55,.04) 0%,transparent 70%);
+  pointer-events:none;
+  z-index:0;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:16px 24px;
+  border-bottom:1px solid var(--or-border);
+  background:rgba(8,6,4,.9);
+  backdrop-filter:blur(10px);
+  flex-shrink:0;
+  position:relative;
+  z-index:10;
+}
+.topbar__menu-btn {
+  display:none;
+  background:none;
+  border:none;
+  color:var(--or-pale);
+  font-size:1.2rem;
+  cursor:pointer;
+  padding:4px;
+}
+@media(max-width:768px){ .topbar__menu-btn { display:block; } }
+.topbar__module-icon { font-size:1.3rem; }
+.topbar__info { flex:1; }
+.topbar__module-name {
+  font-family:'Cormorant Garamond',serif;
+  font-size:1rem;
+  font-weight:600;
+  color:var(--or-blanc);
+}
+.topbar__module-desc {
+  font-size:.6rem;
+  color:var(--texte-dim);
+  letter-spacing:.08em;
+}
+.topbar__new-btn {
+  background:none;
+  border:1px solid var(--or-border);
+  border-radius:5px;
+  padding:6px 14px;
+  color:var(--texte-dim);
+  font-size:.6rem;
+  font-family:'Jost',sans-serif;
+  font-weight:500;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:all .2s;
+}
+.topbar__new-btn:hover { border-color:var(--or); color:var(--or); }
+
+/* ── MESSAGES AREA ── */
+.messages-area {
+  flex:1;
+  overflow-y:auto;
+  padding:28px 24px;
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+  position:relative;
+  z-index:1;
+  scrollbar-width:thin;
+  scrollbar-color:var(--or-border) transparent;
+}
+
+/* Welcome screen */
+.welcome {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  flex:1;
+  text-align:center;
+  padding:40px 20px;
+  gap:16px;
+}
+.welcome__circle {
+  width:80px; height:80px;
+  border-radius:50%;
+  border:1.5px solid rgba(212,175,55,.4);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:8px;
+  position:relative;
+}
+.welcome__circle::before {
+  content:'';
+  position:absolute;
+  inset:-6px;
+  border-radius:50%;
+  border:1px solid rgba(212,175,55,.15);
+}
+.welcome__circle-inner {
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.6rem;
+  font-weight:700;
+  font-style:italic;
+  background:linear-gradient(135deg,#7A5510,#D4AF37 40%,#F7E080);
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.welcome__title {
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.5rem;
+  font-weight:600;
+  font-style:italic;
+  color:var(--or-blanc);
+}
+.welcome__subtitle {
+  font-size:.75rem;
+  color:var(--texte-dim);
+  max-width:380px;
+  line-height:1.6;
+  letter-spacing:.03em;
+}
+.welcome__starters {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:center;
+  max-width:500px;
+  margin-top:8px;
+}
+.starter-btn {
+  background:var(--or-glow);
+  border:1px solid var(--or-border);
+  border-radius:20px;
+  padding:8px 16px;
+  color:var(--texte);
+  font-size:.65rem;
+  font-family:'Jost',sans-serif;
+  cursor:pointer;
+  transition:all .2s;
+  text-align:left;
+}
+.starter-btn:hover { background:rgba(212,175,55,.12); border-color:rgba(212,175,55,.3); color:var(--or-blanc); }
+
+/* Message bubbles */
+.message {
+  display:flex;
+  gap:12px;
+  max-width:820px;
+  animation:fadeInUp .3s ease;
+}
+.message--user { align-self:flex-end; flex-direction:row-reverse; }
+.message--oria  { align-self:flex-start; }
+
+@keyframes fadeInUp {
+  from { opacity:0; transform:translateY(8px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.message__avatar {
+  width:32px; height:32px;
+  border-radius:50%;
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:.75rem;
+  font-family:'Cormorant Garamond',serif;
+  font-style:italic;
+  font-weight:700;
+}
+.message--oria .message__avatar {
+  background:rgba(212,175,55,.12);
+  border:1px solid rgba(212,175,55,.3);
+  color:var(--or);
+}
+.message--user .message__avatar {
+  background:rgba(240,232,213,.08);
+  border:1px solid rgba(240,232,213,.15);
+  color:var(--texte-dim);
+  font-size:.65rem;
+  font-style:normal;
+  font-weight:600;
+  font-family:'Jost',sans-serif;
+}
+
+.message__bubble {
+  padding:14px 18px;
+  border-radius:12px;
+  font-size:.82rem;
+  line-height:1.7;
+  max-width:680px;
+}
+.message--oria .message__bubble {
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--or-border);
+  color:var(--creme);
+  border-top-left-radius:4px;
+}
+.message--user .message__bubble {
+  background:rgba(212,175,55,.1);
+  border:1px solid rgba(212,175,55,.2);
+  color:var(--or-blanc);
+  border-top-right-radius:4px;
+}
+
+/* Typing indicator */
+.typing-indicator {
+  display:flex;
+  gap:5px;
+  padding:14px 18px;
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--or-border);
+  border-radius:12px;
+  border-top-left-radius:4px;
+  width:fit-content;
+}
+.typing-dot {
+  width:6px; height:6px;
+  border-radius:50%;
+  background:var(--or-pale);
+  animation:typingPulse 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay:.2s; }
+.typing-dot:nth-child(3) { animation-delay:.4s; }
+@keyframes typingPulse {
+  0%,100% { opacity:.3; transform:scale(.8); }
+  50%      { opacity:1;  transform:scale(1); }
+}
+
+/* Emergency banner */
+.emergency-banner {
+  background:rgba(200,60,60,.1);
+  border:1px solid rgba(200,60,60,.3);
+  border-radius:8px;
+  padding:12px 16px;
+  font-size:.7rem;
+  color:rgba(240,180,180,.9);
+  line-height:1.6;
+  display:none;
+}
+.emergency-banner.show { display:block; }
+
+/* ── INPUT AREA ── */
+.input-area {
+  padding:16px 24px 20px;
+  border-top:1px solid var(--or-border);
+  background:rgba(8,6,4,.9);
+  backdrop-filter:blur(10px);
+  flex-shrink:0;
+  position:relative;
+  z-index:10;
+}
+.input-wrap {
+  display:flex;
+  gap:10px;
+  align-items:flex-end;
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--or-border);
+  border-radius:12px;
+  padding:10px 14px;
+  transition:border-color .2s;
+}
+.input-wrap:focus-within { border-color:rgba(212,175,55,.4); }
+
+#userInput {
+  flex:1;
+  background:none;
+  border:none;
+  outline:none;
+  color:var(--creme);
+  font-size:.82rem;
+  font-family:'Jost',sans-serif;
+  resize:none;
+  min-height:24px;
+  max-height:120px;
+  line-height:1.5;
+}
+#userInput::placeholder { color:var(--texte-dim); }
+
+.send-btn {
+  width:34px; height:34px;
+  border-radius:8px;
+  background:rgba(212,175,55,.15);
+  border:1px solid rgba(212,175,55,.3);
+  color:var(--or);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:all .2s;
+  flex-shrink:0;
+}
+.send-btn:hover { background:rgba(212,175,55,.25); border-color:var(--or); }
+.send-btn:disabled { opacity:.4; cursor:not-allowed; }
+.send-btn svg { width:16px; height:16px; }
+
+.input-hint {
+  font-size:.55rem;
+  color:var(--texte-dim);
+  text-align:center;
+  margin-top:8px;
+  letter-spacing:.05em;
+}
+
+/* ── PLAN BANNER ── */
+.plan-banner {
+  background:linear-gradient(135deg,rgba(212,175,55,.08),rgba(212,175,55,.04));
+  border:1px solid rgba(212,175,55,.2);
+  border-radius:8px;
+  padding:10px 16px;
+  margin-bottom:12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.plan-banner__text {
+  font-size:.65rem;
+  color:var(--texte-dim);
+  line-height:1.5;
+}
+.plan-banner__text strong { color:var(--or-pale); }
+.plan-banner__cta {
+  background:rgba(212,175,55,.15);
+  border:1px solid rgba(212,175,55,.3);
+  border-radius:5px;
+  padding:6px 14px;
+  color:var(--or);
+  font-size:.6rem;
+  font-family:'Jost',sans-serif;
+  font-weight:600;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  cursor:pointer;
+  text-decoration:none;
+  white-space:nowrap;
+  transition:all .2s;
+}
+.plan-banner__cta:hover { background:rgba(212,175,55,.25); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--or-border); border-radius:2px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ═══════════════════════════════════════════════
+       SIDEBAR
+  ═══════════════════════════════════════════════ -->
+  <aside class="sidebar" id="sidebar">
+
+    <div class="sidebar__header">
+      <div class="oria-logo">ORIA</div>
+      <div class="oria-tagline">Ton coach IA · OSE Le Cercle</div>
+    </div>
+
+    <div class="sidebar__label">Modules de coaching</div>
+
+    <nav class="modules-list">
+      <button class="module-btn active" data-module="confiance" onclick="selectModule(this)">
+        <span class="module-btn__icon">✦</span>
+        <span class="module-btn__info">
+          <span class="module-btn__name">Confiance & Estime</span>
+          <span class="module-btn__desc">Croyances · Valeur · Légitimité</span>
+        </span>
+      </button>
+      <button class="module-btn" data-module="argent" onclick="selectModule(this)">
+        <span class="module-btn__icon">◈</span>
+        <span class="module-btn__info">
+          <span class="module-btn__name">Argent & Abondance</span>
+          <span class="module-btn__desc">Croyances · Indépendance · Valeur</span>
+        </span>
+      </button>
+      <button class="module-btn" data-module="corps" onclick="selectModule(this)">
+        <span class="module-btn__icon">◎</span>
+        <span class="module-btn__info">
+          <span class="module-btn__name">Corps & Féminité</span>
+          <span class="module-btn__desc">Image · Reconnexion · Sensorialité</span>
+        </span>
+      </button>
+      <button class="module-btn" data-module="relations" onclick="selectModule(this)">
+        <span class="module-btn__icon">⟡</span>
+        <span class="module-btn__info">
+          <span class="module-btn__name">Relations & Limites</span>
+          <span class="module-btn__desc">Patterns · Limites · Dynamiques</span>
+        </span>
+      </button>
+      <button class="module-btn" data-module="ambition" onclick="selectModule(this)">
+        <span class="module-btn__icon">△</span>
+        <span class="module-btn__info">
+          <span class="module-btn__name">Ambition & Vision</span>
+          <span class="module-btn__desc">Désirs · Objectifs · Action</span>
+        </span>
+      </button>
+      <button class="module-btn" data-module="emotions" onclick="selectModule(this)">
+        <span class="module-btn__icon">〜</span>
+        <span class="module-btn__info">
+          <span class="module-btn__name">Émotions & Régulation</span>
+          <span class="module-btn__desc">Intelligence émotionnelle · Paix</span>
+        </span>
+      </button>
+      <button class="module-btn" data-module="identite" onclick="selectModule(this)">
+        <span class="module-btn__icon">◇</span>
+        <span class="module-btn__info">
+          <span class="module-btn__name">Identité & Valeurs</span>
+          <span class="module-btn__desc">Authenticité · Singularité</span>
+        </span>
+      </button>
+      <button class="module-btn" data-module="communication" onclick="selectModule(this)">
+        <span class="module-btn__icon">◉</span>
+        <span class="module-btn__info">
+          <span class="module-btn__name">Communication</span>
+          <span class="module-btn__desc">Assertivité · Expression · Impact</span>
+        </span>
+      </button>
+      <button class="module-btn" data-module="maternite" onclick="selectModule(this)">
+        <span class="module-btn__icon">❋</span>
+        <span class="module-btn__info">
+          <span class="module-btn__name">Maternité & Femme</span>
+          <span class="module-btn__desc">Identité · Espace · Culpabilité</span>
+        </span>
+      </button>
+      <button class="module-btn" data-module="sexualite" onclick="selectModule(this)">
+        <span class="module-btn__icon">⟁</span>
+        <span class="module-btn__info">
+          <span class="module-btn__name">Sexualité & Désir</span>
+          <span class="module-btn__desc">Désir · Blocages · Reconnexion</span>
+        </span>
+      </button>
+
+      <div class="sidebar__divider"></div>
+      <div class="sidebar__label" style="padding-left:0;padding-bottom:6px">Situations</div>
+
+      <button class="module-btn" data-module="toxique" onclick="selectModule(this)">
+        <span class="module-btn__icon">🛡</span>
+        <span class="module-btn__info">
+          <span class="module-btn__name">Comportements Toxiques</span>
+          <span class="module-btn__desc">Analyse · Signaux · Plan d'action</span>
+        </span>
+      </button>
+      <button class="module-btn" data-module="prepa_date" onclick="selectModule(this)">
+        <span class="module-btn__icon">✧</span>
+        <span class="module-btn__info">
+          <span class="module-btn__name">Prépa Date</span>
+          <span class="module-btn__desc">Mindset · Objectifs · Affirmations</span>
+        </span>
+      </button>
+      <button class="module-btn" data-module="debrief_date" onclick="selectModule(this)">
+        <span class="module-btn__icon">◈</span>
+        <span class="module-btn__info">
+          <span class="module-btn__name">Débrief Post-Date</span>
+          <span class="module-btn__desc">Analyse · Signaux · Décision</span>
+        </span>
+      </button>
+    </nav>
+
+    <div class="sidebar__footer">
+      <div class="access-badge">
+        <div class="access-badge__dot"></div>
+        <div class="access-badge__text"><strong>OSE Le Cercle</strong><br>Accès membre inclus</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════════════════════════════════
+       MAIN CHAT
+  ═══════════════════════════════════════════════ -->
+  <main class="main">
+
+    <div class="topbar">
+      <button class="topbar__menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="topbar__module-icon" id="topbarIcon">✦</div>
+      <div class="topbar__info">
+        <div class="topbar__module-name" id="topbarName">Confiance & Estime de Soi</div>
+        <div class="topbar__module-desc" id="topbarDesc">Module 01 · Croyances limitantes · Valeur personnelle · Légitimité</div>
+      </div>
+      <button class="topbar__new-btn" onclick="newChat()">Nouvelle conv.</button>
+    </div>
+
+    <div class="messages-area" id="messagesArea">
+
+      <div class="welcome" id="welcomeScreen">
+        <div class="welcome__circle">
+          <span class="welcome__circle-inner">O</span>
+        </div>
+        <div class="welcome__title">Bonjour, je suis ORIA</div>
+        <div class="welcome__subtitle">
+          Ton espace privé de coaching avec la méthode Tatiana Volks. Dis-moi ce qui se passe pour toi aujourd'hui.
+        </div>
+        <div class="welcome__starters" id="starterBtns"></div>
+      </div>
+
+    </div>
+
+    <div class="input-area">
+      <div class="plan-banner" id="planBanner" style="display:none">
+        <div class="plan-banner__text">
+          Tu découvres ORIA · <strong>Accès complet à partir de 9,99€/mois</strong> ou inclus dans OSE Le Cercle
+        </div>
+        <a href="https://www.syn-ergy.eu/oselecercle" target="_blank" class="plan-banner__cta">Rejoindre</a>
+      </div>
+      <div class="emergency-banner" id="emergencyBanner">
+        🆘 Si tu vis une situation de danger, tu peux appeler le <strong>3919</strong> (Violences Femmes Info, gratuit, 24h/24) ou contacter <strong>stop-violences-femmes.gouv.fr</strong>
+      </div>
+      <div class="input-wrap">
+        <textarea id="userInput" placeholder="Écris ce qui se passe pour toi..." rows="1"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+      <div class="input-hint">Espace confidentiel · ORIA ne remplace pas un professionnel de santé</div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let currentModule = 'confiance';
+let messages = [];
+let isStreaming = false;
+let messageCount = 0;
+
+const MODULE_META = {
+  confiance:     { icon:'✦', name:'Confiance & Estime de Soi',    desc:'Module 01 · Croyances limitantes · Valeur personnelle · Légitimité' },
+  argent:        { icon:'◈', name:'Argent & Abondance',            desc:'Module 02 · Croyances · Indépendance financière · Valeur du travail' },
+  corps:         { icon:'◎', name:'Corps & Féminité',              desc:'Module 03 · Image corporelle · Reconnexion · Sensorialité' },
+  relations:     { icon:'⟡', name:'Relations & Limites',           desc:'Module 04 · Patterns · Poser des limites · Dynamiques relationnelles' },
+  ambition:      { icon:'△', name:'Ambition & Vision',             desc:'Module 05 · Désirs profonds · Objectifs · Passage à l\'action' },
+  emotions:      { icon:'〜', name:'Émotions & Régulation',        desc:'Module 06 · Intelligence émotionnelle · Régulation · Paix intérieure' },
+  identite:      { icon:'◇', name:'Identité & Valeurs',            desc:'Module 07 · Authenticité · Valeurs propres · Singularité' },
+  communication: { icon:'◉', name:'Communication & Assertivité',   desc:'Module 08 · Assertivité · Expression des besoins · Impact' },
+  maternite:     { icon:'❋', name:'Maternité & Femme',             desc:'Module 09 · Identité maternelle · Espace personnel · Culpabilité' },
+  sexualite:     { icon:'⟁', name:'Sexualité & Désir',             desc:'Module 10 · Désir · Blocages · Reconnexion sensuelle' },
+  toxique:       { icon:'🛡', name:'Comportements Toxiques',        desc:'Situation · Analyse des patterns · Signaux d\'alerte · Plan d\'action' },
+  prepa_date:    { icon:'✧', name:'Préparation de Date',           desc:'Situation · Mindset · Objectifs · Affirmations de soirée' },
+  debrief_date:  { icon:'◈', name:'Débrief Post-Date',             desc:'Situation · Analyse des signaux · Green & Red flags · Décision' }
+};
+
+const STARTERS = {
+  confiance:     ["Je n'arrive pas à me sentir légitime", "Je doute de ma valeur constamment", "J'ai peur de prendre de la place"],
+  argent:        ["Je me sens coupable de vouloir plus d'argent", "Mon conjoint gère tout l'argent", "J'ai du mal à demander une augmentation"],
+  corps:         ["Je ne me reconnais plus dans le miroir", "J'ai honte de mon corps depuis longtemps", "Je veux me reconnecter à ma féminité"],
+  relations:     ["Je n'arrive pas à dire non", "Mes relations me vident de mon énergie", "Je veux analyser une relation toxique"],
+  ambition:      ["J'ai peur de vouloir trop", "Je ne sais plus ce que je veux vraiment", "J'ai du mal à passer à l'action"],
+  emotions:      ["Je me sens débordée émotionnellement", "Je rumine tout le temps", "Je n'arrive pas à gérer ma colère"],
+  identite:      ["Je ne sais plus qui je suis vraiment", "Je vis pour les autres depuis trop longtemps", "Mes valeurs et ma vie ne s'accordent plus"],
+  communication: ["J'avale tout sans rien dire", "J'ai une conversation difficile à avoir", "Je n'arrive pas à m'affirmer au travail"],
+  maternite:     ["Je me perds dans mon rôle de maman", "Je me sens coupable de vouloir du temps pour moi", "Je ne suis plus femme depuis que je suis mère"],
+  sexualite:     ["Je n'ai plus de désir depuis longtemps", "Je veux parler de ma sexualité sans honte", "Il y a des blocages que je n'ai jamais abordés"],
+  toxique:       ["Je veux analyser le comportement de mon conjoint", "Il retourne toujours les situations contre moi", "Je ne sais plus si c'est normal ce qu'il fait"],
+  prepa_date:    ["J'ai une date ce soir et je suis stressée", "Je veux me préparer mentalement", "Aide-moi à définir ce que je veux de cette rencontre"],
+  debrief_date:  ["Je viens de rentrer d'une date", "Je veux analyser ce qui s'est passé", "J'ai des signaux mixtes et je ne sais pas quoi en penser"]
+};
+
+// ═══════════════════════════════════════════════════════════════
+// MODULE SELECTION
+// ═══════════════════════════════════════════════════════════════
+function selectModule(btn) {
+  document.querySelectorAll('.module-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentModule = btn.dataset.module;
+
+  const meta = MODULE_META[currentModule];
+  document.getElementById('topbarIcon').textContent = meta.icon;
+  document.getElementById('topbarName').textContent  = meta.name;
+  document.getElementById('topbarDesc').textContent  = meta.desc;
+
+  // Emergency banner for toxique module
+  document.getElementById('emergencyBanner').classList.toggle('show', currentModule === 'toxique');
+
+  newChat();
+
+  // Close sidebar on mobile
+  if(window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CHAT MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+function newChat() {
+  messages = [];
+  messageCount = 0;
+  const area = document.getElementById('messagesArea');
+  area.innerHTML = '';
+
+  // Welcome screen
+  const welcome = document.createElement('div');
+  welcome.className = 'welcome';
+  welcome.id = 'welcomeScreen';
+
+  const starters = STARTERS[currentModule] || [];
+  const meta = MODULE_META[currentModule];
+
+  welcome.innerHTML = `
+    <div class="welcome__circle">
+      <span class="welcome__circle-inner">O</span>
+    </div>
+    <div class="welcome__title">Je t'écoute</div>
+    <div class="welcome__subtitle">Tu es dans l'espace <strong>${meta.name}</strong>.<br>Dis-moi ce qui se passe pour toi.</div>
+    <div class="welcome__starters">
+      ${starters.map(s => `<button class="starter-btn" onclick="sendStarter('${s}')">${s}</button>`).join('')}
+    </div>
+  `;
+  area.appendChild(welcome);
+  document.getElementById('planBanner').style.display = 'none';
+}
+
+function sendStarter(text) {
+  document.getElementById('userInput').value = text;
+  sendMessage();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SEND MESSAGE
+// ═══════════════════════════════════════════════════════════════
+async function sendMessage() {
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text || isStreaming) return;
+
+  // Hide welcome
+  const ws = document.getElementById('welcomeScreen');
+  if (ws) ws.remove();
+
+  input.value = '';
+  input.style.height = 'auto';
+  isStreaming = true;
+  messageCount++;
+  document.getElementById('sendBtn').disabled = true;
+
+  // Show plan banner after 3 messages (free preview)
+  if (messageCount >= 3) {
+    document.getElementById('planBanner').style.display = 'flex';
+  }
+
+  // Add user message
+  messages.push({ role: 'user', content: text });
+  appendMessage('user', text);
+
+  // Show typing indicator
+  const typingId = showTyping();
+
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages,
+        module: currentModule
+      })
+    });
+
+    removeTyping(typingId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    // Stream the response
+    const oriaMsg = appendMessage('oria', '');
+    const bubble = oriaMsg.querySelector('.message__bubble');
+    let fullText = '';
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') break;
+          try {
+            const json = JSON.parse(data);
+            if (json.text) {
+              fullText += json.text;
+              bubble.innerHTML = formatText(fullText) + '<span class="cursor">▌</span>';
+              scrollToBottom();
+            }
+          } catch(e) {}
+        }
+      }
+    }
+
+    // Remove cursor
+    bubble.innerHTML = formatText(fullText);
+    messages.push({ role: 'assistant', content: fullText });
+
+  } catch(err) {
+    removeTyping(typingId);
+    appendMessage('oria', "Je suis désolée, une erreur est survenue. Réessaie dans un instant. 💛");
+    console.error(err);
+  }
+
+  isStreaming = false;
+  document.getElementById('sendBtn').disabled = false;
+  input.focus();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════════════════════
+function appendMessage(role, text) {
+  const area = document.getElementById('messagesArea');
+  const div = document.createElement('div');
+  div.className = `message message--${role}`;
+
+  const avatar = role === 'oria'
+    ? `<div class="message__avatar">O</div>`
+    : `<div class="message__avatar">Moi</div>`;
+
+  div.innerHTML = `
+    ${avatar}
+    <div class="message__bubble">${formatText(text)}</div>
+  `;
+  area.appendChild(div);
+  scrollToBottom();
+  return div;
+}
+
+function showTyping() {
+  const area = document.getElementById('messagesArea');
+  const id = 'typing-' + Date.now();
+  const div = document.createElement('div');
+  div.className = 'message message--oria';
+  div.id = id;
+  div.innerHTML = `
+    <div class="message__avatar">O</div>
+    <div class="typing-indicator">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>
+  `;
+  area.appendChild(div);
+  scrollToBottom();
+  return id;
+}
+
+function removeTyping(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function formatText(text) {
+  return text
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g,'<em>$1</em>')
+    .replace(/\n/g,'<br>');
+}
+
+function scrollToBottom() {
+  const area = document.getElementById('messagesArea');
+  area.scrollTop = area.scrollHeight;
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// ── Auto-resize textarea ──────────────────────────────────────
+document.getElementById('userInput').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+
+// ── Enter to send ─────────────────────────────────────────────
+document.getElementById('userInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+// ── Init ──────────────────────────────────────────────────────
+newChat();
+</script>
+
+<style>
+.cursor { animation: blink .7s ease infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+</style>
+
+</body>
+</html>
