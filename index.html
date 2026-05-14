@@ -6,6 +6,8 @@
 <title>ORIA — Ton Coach IA · OSE Le Cercle</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script src="https://unpkg.com/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://unpkg.com/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════════════
@@ -674,6 +676,242 @@ html, body { height:100%; background:var(--noir); color:var(--creme); font-famil
 .topbar__user:hover { border-color:rgba(212,175,55,.3); }
 .topbar__user-dot { width:7px; height:7px; border-radius:50%; background:#7ddd88; }
 .topbar__user-name { font-size:.62rem; color:var(--texte-dim); font-weight:500; }
+
+/* ═══════════════════════════════════════════════════════════
+   ORIA — INTRO SCROLL STORY (overlay fixe)
+═══════════════════════════════════════════════════════════ */
+#oria-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 8000;
+  background: #080604;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: opacity .7s ease;
+}
+#oria-intro.hidden-intro { opacity:0; pointer-events:none; }
+
+/* Aurora background */
+#oi-aurora {
+  position: absolute; inset: 0;
+  pointer-events: none; z-index: 0;
+}
+#oi-aurora::before {
+  content: '';
+  position: absolute;
+  width: 80vw; height: 80vw;
+  top: -20%; left: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse, rgba(212,175,55,0.07) 0%, transparent 65%);
+  border-radius: 50%;
+  animation: oi-drift 16s ease-in-out infinite alternate;
+}
+#oi-aurora::after {
+  content: '';
+  position: absolute;
+  width: 55vw; height: 55vw;
+  bottom: -15%; right: -10%;
+  background: radial-gradient(ellipse, rgba(194,96,122,0.06) 0%, transparent 65%);
+  border-radius: 50%;
+  animation: oi-drift 22s ease-in-out infinite alternate-reverse;
+}
+@keyframes oi-drift {
+  from { transform: translateX(-50%) scale(1); }
+  to   { transform: translateX(-47%) scale(1.07) translateY(4%); }
+}
+
+/* Orb SVG stage */
+#oi-orb-stage {
+  position: absolute;
+  width: 44vh; height: 44vh;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  will-change: transform;
+}
+#oi-orb-svg { width:100%; height:100%; overflow:visible; }
+
+/* Ring animations */
+.oi-ring { transform-origin:center; will-change:transform; }
+.oi-r1 { animation: oi-spin1 18s linear infinite; }
+.oi-r2 { animation: oi-spin2 28s linear infinite; }
+.oi-r3 { animation: oi-spin3 12s linear infinite; }
+.oi-r4 { animation: oi-spin4 36s linear infinite; }
+.oi-r5 { animation: oi-spin5 22s linear infinite; }
+@keyframes oi-spin1 { to { transform: rotate(360deg); } }
+@keyframes oi-spin2 { to { transform: rotate(-360deg); } }
+@keyframes oi-spin3 { to { transform: rotate(360deg); } }
+@keyframes oi-spin4 { to { transform: rotate(-360deg); } }
+@keyframes oi-spin5 { to { transform: rotate(360deg); } }
+
+/* Particles */
+.oi-part {
+  transform-origin: center;
+  will-change: transform;
+  animation: oi-orbit var(--oi-spd, 8s) linear infinite;
+}
+@keyframes oi-orbit { to { transform: rotate(360deg); } }
+
+/* Core pulse */
+@keyframes oi-pulse {
+  0%,100% { r: 34; opacity:.92; }
+  50%      { r: 36; opacity:1;   }
+}
+#oi-core { animation: oi-pulse 3.8s ease-in-out infinite; }
+
+/* Scenes */
+.oi-scene {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  z-index: 4;
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+.oi-scene.s0 {
+  align-items: center;
+  justify-content: center;
+}
+.oi-scene.s1, .oi-scene.s2 {
+  justify-content: flex-end;
+  padding: 0 8% 12%;
+}
+.oi-scene.s3 {
+  align-items: center;
+  justify-content: center;
+}
+
+/* Scene 0: hero */
+.oi-hero-title {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-weight: 300;
+  font-size: clamp(5rem, 14vw, 11rem);
+  line-height: 1;
+  background: linear-gradient(135deg, #D4AF37 0%, #EAC84A 45%, #C8A84B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: .04em;
+}
+.oi-hero-sub {
+  font-family: 'Jost', sans-serif;
+  font-size: clamp(.75rem, 1.8vw, 1.05rem);
+  font-weight: 300;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: rgba(240,232,213,0.55);
+  margin-top: 1.2rem;
+}
+.oi-scroll-cue {
+  position: absolute;
+  bottom: 9%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .5rem;
+  color: rgba(212,175,55,.5);
+  font-size: .65rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  font-family: 'Jost', sans-serif;
+  animation: oi-bounce 2s ease-in-out infinite;
+}
+.oi-scroll-cue svg { width:18px; opacity:.6; }
+@keyframes oi-bounce {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50%      { transform: translateX(-50%) translateY(6px); }
+}
+
+/* Scenes 1-2: body text */
+.oi-scene-label {
+  font-family: 'Jost', sans-serif;
+  font-size: clamp(.55rem, 1.2vw, .7rem);
+  font-weight: 500;
+  letter-spacing: .25em;
+  text-transform: uppercase;
+  color: rgba(212,175,55,.6);
+  margin-bottom: .7rem;
+}
+.oi-scene-heading {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-weight: 300;
+  font-size: clamp(1.6rem, 4vw, 2.6rem);
+  color: #F0E8D5;
+  line-height: 1.2;
+  max-width: 520px;
+}
+.oi-pills {
+  display: flex; flex-wrap: wrap; gap: .5rem;
+  margin-top: 1.2rem; max-width: 480px;
+}
+.oi-pill {
+  font-family: 'Jost', sans-serif;
+  font-size: .72rem;
+  font-weight: 400;
+  letter-spacing: .1em;
+  color: rgba(240,232,213,0.6);
+  border: 1px solid rgba(212,175,55,.22);
+  border-radius: 20px;
+  padding: 5px 14px;
+  background: rgba(212,175,55,.06);
+}
+
+/* Scene 3: CTA */
+.oi-cta-title {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-weight: 300;
+  font-size: clamp(1.8rem, 4.5vw, 3rem);
+  color: #F0E8D5;
+  text-align: center;
+  margin-bottom: 2rem;
+  max-width: 540px;
+}
+.oi-cta-btn {
+  font-family: 'Jost', sans-serif;
+  font-size: .85rem;
+  font-weight: 500;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: #080604;
+  background: linear-gradient(135deg, #D4AF37, #EAC84A);
+  border: none;
+  border-radius: 50px;
+  padding: 16px 40px;
+  cursor: pointer;
+  pointer-events: all;
+  transition: opacity .2s, transform .2s;
+  box-shadow: 0 4px 28px rgba(212,175,55,.35);
+}
+.oi-cta-btn:hover { opacity:.88; transform:translateY(-2px); }
+
+/* Progress dots */
+#oi-dots {
+  position: absolute;
+  right: 32px; top: 50%;
+  transform: translateY(-50%);
+  display: flex; flex-direction: column;
+  gap: 10px; z-index: 10;
+}
+.oi-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: rgba(212,175,55,.25);
+  transition: background .3s, transform .3s;
+}
+.oi-dot.active {
+  background: #D4AF37;
+  transform: scale(1.5);
+}
+
 </style>
 </head>
 <body>
@@ -1381,6 +1619,271 @@ document.getElementById('loginPrenom')?.addEventListener('keydown', e => {
 .cursor { animation: blink .7s ease infinite; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 </style>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     ORIA INTRO STORY — overlay fixe, scroll virtuel
+═══════════════════════════════════════════════════════ -->
+<div id="oria-intro">
+  <div id="oi-aurora"></div>
+
+  <!-- Orb SVG -->
+  <div id="oi-orb-stage">
+    <svg id="oi-orb-svg" viewBox="-220 -220 440 440" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="oi-core-grad" cx="50%" cy="45%" r="50%">
+          <stop offset="0%"   stop-color="#FFF6D0" stop-opacity=".95"/>
+          <stop offset="40%"  stop-color="#EAC84A" stop-opacity=".9"/>
+          <stop offset="75%"  stop-color="#D4AF37" stop-opacity=".75"/>
+          <stop offset="100%" stop-color="#8B6E2A" stop-opacity=".3"/>
+        </radialGradient>
+        <radialGradient id="oi-bloom-grad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stop-color="#D4AF37" stop-opacity=".18"/>
+          <stop offset="100%" stop-color="#D4AF37" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="oi-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="8" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <!-- Ring 1 -->
+      <g class="oi-ring oi-r1">
+        <ellipse rx="185" ry="70" fill="none" stroke="rgba(212,175,55,.18)" stroke-width=".8"/>
+        <circle cx="185"  cy="0"   r="2.5" fill="rgba(212,175,55,.6)"/>
+        <circle cx="-185" cy="0"   r="1.5" fill="rgba(212,175,55,.4)"/>
+        <circle cx="0"    cy="-70" r="2"   fill="rgba(212,175,55,.5)"/>
+      </g>
+      <!-- Ring 2 -->
+      <g class="oi-ring oi-r2">
+        <ellipse rx="155" ry="105" fill="none" stroke="rgba(194,96,122,.13)" stroke-width=".7" stroke-dasharray="4 8"/>
+        <circle cx="155"  cy="0"   r="2"   fill="rgba(194,96,122,.5)"/>
+        <circle cx="-155" cy="0"   r="1.5" fill="rgba(194,96,122,.35)"/>
+      </g>
+      <!-- Ring 3 -->
+      <g class="oi-ring oi-r3">
+        <ellipse rx="200" ry="55" fill="none" stroke="rgba(212,175,55,.10)" stroke-width=".6" stroke-dasharray="2 10"/>
+        <circle cx="200"  cy="0"  r="1.8" fill="rgba(212,175,55,.45)"/>
+        <circle cx="-200" cy="0"  r="1.2" fill="rgba(212,175,55,.3)"/>
+      </g>
+      <!-- Ring 4 -->
+      <g class="oi-ring oi-r4">
+        <ellipse rx="130" ry="130" fill="none" stroke="rgba(240,232,213,.06)" stroke-width=".5"/>
+        <circle cx="130"  cy="0"  r="1.5" fill="rgba(240,232,213,.3)"/>
+        <circle cx="-130" cy="0"  r="1"   fill="rgba(240,232,213,.2)"/>
+        <circle cx="0"    cy="130" r="1.5" fill="rgba(240,232,213,.25)"/>
+        <circle cx="0"   cy="-130" r="1"  fill="rgba(240,232,213,.2)"/>
+      </g>
+      <!-- Ring 5 -->
+      <g class="oi-ring oi-r5">
+        <ellipse rx="168" ry="88" fill="none" stroke="rgba(194,96,122,.09)" stroke-width=".6" stroke-dasharray="6 12"/>
+        <circle cx="168" cy="0"  r="1.6" fill="rgba(194,96,122,.38)"/>
+      </g>
+      <!-- Particles -->
+      <g class="oi-part" style="--oi-spd:7s">
+        <circle cx="92" cy="0" r="1.4" fill="rgba(212,175,55,.7)"/>
+      </g>
+      <g class="oi-part" style="--oi-spd:11s;transform:rotate(120deg)">
+        <circle cx="80" cy="0" r="1" fill="rgba(194,96,122,.6)"/>
+      </g>
+      <g class="oi-part" style="--oi-spd:9s;transform:rotate(240deg)">
+        <circle cx="105" cy="0" r="1.2" fill="rgba(240,232,213,.5)"/>
+      </g>
+      <g class="oi-part" style="--oi-spd:15s;transform:rotate(60deg)">
+        <circle cx="118" cy="0" r=".9" fill="rgba(212,175,55,.55)"/>
+      </g>
+      <g class="oi-part" style="--oi-spd:6s;transform:rotate(180deg)">
+        <circle cx="76" cy="0" r="1.1" fill="rgba(194,96,122,.45)"/>
+      </g>
+      <!-- Bloom -->
+      <circle r="78" fill="url(#oi-bloom-grad)"/>
+      <!-- Core -->
+      <circle id="oi-core" r="34" fill="url(#oi-core-grad)" filter="url(#oi-glow)"/>
+      <circle r="18" fill="rgba(255,246,208,.85)"/>
+      <circle cx="-6" cy="-10" r="9" fill="rgba(255,255,255,.22)"/>
+      <!-- Letter O -->
+      <text
+        x="0" y="12"
+        text-anchor="middle"
+        font-family="Cormorant Garamond, Georgia, serif"
+        font-style="italic"
+        font-weight="300"
+        font-size="28"
+        fill="rgba(8,6,4,0.82)"
+        letter-spacing=".05em">O</text>
+    </svg>
+  </div>
+
+  <!-- Scene 0: Hero -->
+  <div class="oi-scene s0">
+    <div style="display:flex;flex-direction:column;align-items:center;z-index:5;position:relative;margin-top:18vh">
+      <div class="oi-hero-title">ORIA</div>
+      <div class="oi-hero-sub">Ton coach d'évolution personnelle</div>
+    </div>
+    <div class="oi-scroll-cue">
+      <span>Scroll</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Scene 1 -->
+  <div class="oi-scene s1">
+    <div style="z-index:5;position:relative">
+      <div class="oi-scene-label">Espace personnel</div>
+      <div class="oi-scene-heading">Un espace rien<br>que pour toi</div>
+    </div>
+  </div>
+
+  <!-- Scene 2 -->
+  <div class="oi-scene s2">
+    <div style="z-index:5;position:relative">
+      <div class="oi-scene-label">Modules</div>
+      <div class="oi-scene-heading">12 modules · Chaque<br>dimension de ta vie</div>
+      <div class="oi-pills">
+        <span class="oi-pill">Mindset</span>
+        <span class="oi-pill">Relations</span>
+        <span class="oi-pill">Énergie</span>
+        <span class="oi-pill">Finances</span>
+        <span class="oi-pill">Identité</span>
+        <span class="oi-pill">Corps</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scene 3: CTA -->
+  <div class="oi-scene s3" style="flex-direction:column;align-items:center">
+    <div class="oi-cta-title">Prête à te transformer ?</div>
+    <button class="oi-cta-btn" id="oi-cta-btn">Commencer maintenant</button>
+  </div>
+
+  <!-- Progress dots -->
+  <div id="oi-dots">
+    <div class="oi-dot active"></div>
+    <div class="oi-dot"></div>
+    <div class="oi-dot"></div>
+    <div class="oi-dot"></div>
+  </div>
+</div>
+
+<script>
+// ── ORIA Intro — virtual scroll, GSAP timeline ──────────────────────────────
+(function() {
+  const SKIP_KEY = 'oria_intro_seen';
+
+  // Skip intro if already seen in this session
+  if (sessionStorage.getItem(SKIP_KEY)) {
+    document.getElementById('oria-intro').style.display = 'none';
+    return;
+  }
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  const intro   = document.getElementById('oria-intro');
+  const orbStage = document.getElementById('oi-orb-stage');
+  const scenes  = Array.from(document.querySelectorAll('.oi-scene'));
+  const dots    = Array.from(document.querySelectorAll('.oi-dot'));
+  const ctaBtn  = document.getElementById('oi-cta-btn');
+
+  let progress = 0;       // 0 → 1
+  let velocity = 0;
+  let raf      = null;
+  let done     = false;
+
+  // Build master GSAP timeline (paused, driven by progress)
+  const tl = gsap.timeline({ paused: true });
+
+  // Orb entrance
+  gsap.set(orbStage, { scale: 0, opacity: 0 });
+  gsap.to(orbStage, { scale: 1, opacity: 1, duration: 1.4, ease: 'back.out(1.4)', delay: .2 });
+
+  // Scene 0 entrance
+  gsap.set(scenes[0], { opacity: 0, y: 18 });
+  gsap.to(scenes[0], { opacity: 1, y: 0, duration: 1, ease: 'power2.out', delay: .6 });
+
+  // Master scroll timeline
+  tl
+    // 0 → 0.24: scene 0 holds
+    .to({}, { duration: 0.24 })
+    // 0.24 → 0.38: scene 0 out, scene 1 in, orb moves right
+    .to(scenes[0], { opacity: 0, y: -20, duration: 0.12 }, 0.24)
+    .to(orbStage,  { x: '14%', scale: 1.08, duration: 0.2, ease: 'power2.inOut' }, 0.26)
+    .to(scenes[1], { opacity: 1, y: 0, duration: 0.14 }, 0.30)
+    // 0.38 hold
+    .to({}, { duration: 0.12 })
+    // 0.50 → 0.64: scene 1 out, scene 2 in
+    .to(scenes[1], { opacity: 0, y: -20, duration: 0.12 }, 0.50)
+    .to(scenes[2], { opacity: 1, y: 0, duration: 0.14 }, 0.56)
+    // 0.64 hold
+    .to({}, { duration: 0.14 })
+    // 0.78 → 0.92: scene 2 out, scene 3 in, orb back center
+    .to(scenes[2], { opacity: 0, y: -20, duration: 0.12 }, 0.78)
+    .to(orbStage,  { x: '0%', scale: 0.92, duration: 0.18, ease: 'power2.inOut' }, 0.78)
+    .to(scenes[3], { opacity: 1, y: 0, duration: 0.15 }, 0.86)
+    // 0.92 → 1: hold CTA
+    .to({}, { duration: 0.08 });
+
+  // Set initial scene states
+  scenes.forEach((s, i) => { if (i > 0) gsap.set(s, { opacity: 0, y: 30 }); });
+
+  function updateDots(p) {
+    const idx = p < 0.24 ? 0 : p < 0.50 ? 1 : p < 0.78 ? 2 : 3;
+    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+  }
+
+  function applyProgress() {
+    tl.progress(Math.max(0, Math.min(1, progress)));
+    updateDots(progress);
+  }
+
+  // Smooth loop
+  function loop() {
+    if (done) return;
+    velocity *= 0.88;           // friction
+    progress += velocity;
+    progress = Math.max(0, Math.min(1, progress));
+    applyProgress();
+    raf = requestAnimationFrame(loop);
+  }
+
+  // Wheel
+  intro.addEventListener('wheel', e => {
+    e.preventDefault();
+    if (done) return;
+    velocity += e.deltaY * 0.00035;
+  }, { passive: false });
+
+  // Touch
+  let touchY = null;
+  intro.addEventListener('touchstart', e => { touchY = e.touches[0].clientY; }, { passive: true });
+  intro.addEventListener('touchmove', e => {
+    if (touchY === null || done) return;
+    const dy = touchY - e.touches[0].clientY;
+    velocity += dy * 0.0012;
+    touchY = e.touches[0].clientY;
+  }, { passive: true });
+
+  // Launch
+  function launchIntro() {
+    if (done) return;
+    done = true;
+    if (raf) cancelAnimationFrame(raf);
+    sessionStorage.setItem(SKIP_KEY, '1');
+    gsap.to(intro, {
+      opacity: 0, duration: .7, ease: 'power2.inOut',
+      onComplete: () => { intro.style.display = 'none'; }
+    });
+  }
+
+  ctaBtn.addEventListener('click', launchIntro);
+
+  // Start loop
+  raf = requestAnimationFrame(loop);
+
+})();
+</script>
+
 
 </body>
 </html>
