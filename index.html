@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://unpkg.com/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
 <style>
 /* ═══════════════════════════════════════════════════════════
    RESET & VARIABLES
@@ -27,7 +29,9 @@
   --or-border: rgba(212,175,55,0.18);
   --or-glow:   rgba(212,175,55,0.08);
 }
-html, body { height:100%; background:var(--noir); color:var(--creme); font-family:'Jost',sans-serif; overflow:hidden; }
+html, body { height:100%; background:var(--noir); color:var(--creme); font-family:'Jost',sans-serif; }
+body.in-chat { overflow:hidden; height:100%; }
+body.in-intro { overflow-x:hidden; }
 
 /* ═══════════════════════════════════════════════════════════
    LAYOUT
@@ -674,9 +678,371 @@ html, body { height:100%; background:var(--noir); color:var(--creme); font-famil
 .topbar__user:hover { border-color:rgba(212,175,55,.3); }
 .topbar__user-dot { width:7px; height:7px; border-radius:50%; background:#7ddd88; }
 .topbar__user-name { font-size:.62rem; color:var(--texte-dim); font-weight:500; }
+
+/* ═══════════════════════════════════════════════════════════
+   INTRO SCROLL STORY (camera-webgi style)
+═══════════════════════════════════════════════════════════ */
+#intro-story {
+  position: relative;
+  height: 500vh;
+  background: #080604;
+}
+#intro-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Aurora */
+#intro-aurora::before {
+  content: '';
+  position: absolute;
+  width: 80vw; height: 80vw;
+  top: -20%; left: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse, rgba(212,175,55,0.07) 0%, transparent 65%);
+  border-radius: 50%;
+  animation: i-drift 16s ease-in-out infinite alternate;
+}
+#intro-aurora::after {
+  content: '';
+  position: absolute;
+  width: 55vw; height: 55vw;
+  bottom: -15%; right: -10%;
+  background: radial-gradient(ellipse, rgba(194,96,122,0.06) 0%, transparent 65%);
+  border-radius: 50%;
+  animation: i-drift 22s ease-in-out infinite alternate-reverse;
+}
+@keyframes i-drift {
+  from { transform: translateX(-50%) scale(1); }
+  to   { transform: translateX(-47%) scale(1.07) translateY(4%); }
+}
+#intro-aurora {
+  position: absolute; inset: 0;
+  pointer-events: none; z-index: 0;
+}
+
+/* Orb */
+#intro-orb-stage {
+  position: absolute;
+  width: 44vh; height: 44vh;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  will-change: transform, opacity;
+}
+@media(max-width:768px){ #intro-orb-stage { width:68vw; height:68vw; top:38%; } }
+#intro-orb-svg { width:100%; height:100%; overflow:visible; }
+
+/* Ring CSS rotations */
+#ir5 { animation: ispin-cw  44s linear infinite; transform-origin:center; }
+#ir4 { animation: ispin-ccw 32s linear infinite; transform-origin:center; }
+#ir3 { animation: ispin-cw  25s linear infinite; transform-origin:center; }
+#ir2 { animation: ispin-ccw 18s linear infinite; transform-origin:center; }
+#ir1 { animation: ispin-cw  13s linear infinite; transform-origin:center; }
+#iparts { animation: ispin-cw  70s linear infinite; transform-origin:center; }
+@keyframes ispin-cw  { to { transform: rotate(360deg);  } }
+@keyframes ispin-ccw { to { transform: rotate(-360deg); } }
+
+/* Core breathe */
+@keyframes i-breathe { 0%,100%{opacity:.85} 50%{opacity:1;filter:brightness(1.2)} }
+#iorb-core  { animation: i-breathe 4.5s ease-in-out infinite; }
+#iorb-bloom { animation: i-breathe 4.5s ease-in-out infinite 2.2s; }
+
+/* Scenes */
+.iscene {
+  position: absolute; inset: 0;
+  display: flex;
+  z-index: 5;
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+#iscene-0 {
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: clamp(36px,7vh,68px);
+  text-align: center;
+  opacity: 1;
+}
+#iscene-1, #iscene-2 {
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: clamp(24px,5vw,60px) clamp(28px,6vw,80px);
+  padding-right: 52%;
+  opacity: 0;
+}
+#iscene-3 {
+  align-items: flex-end;
+  justify-content: center;
+  flex-direction: column;
+  padding: clamp(24px,5vw,60px) clamp(28px,6vw,80px);
+  text-align: center;
+  opacity: 0;
+}
+@media(max-width:768px){
+  #iscene-1,#iscene-2,#iscene-3 {
+    align-items: flex-end;
+    justify-content: center;
+    text-align: center;
+    padding: 0 24px 32px;
+  }
+  #iscene-1,#iscene-2 { padding-right:24px; }
+}
+.iscene-inner { max-width: 460px; }
+
+.iscene-eyebrow {
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 0.26em; text-transform: uppercase;
+  color: rgba(212,175,55,0.6);
+  margin-bottom: 14px;
+}
+.iscene-hero {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(68px,13vh,118px);
+  font-weight: 700; font-style: italic;
+  letter-spacing: 0.14em; line-height: 1;
+  background: linear-gradient(135deg,#7A5510,#D4AF37 38%,#F7E080 60%,#D4AF37);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 30px rgba(212,175,55,0.45));
+  margin-bottom: 6px;
+}
+.iscene-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(28px,5.5vh,50px);
+  font-weight: 400; line-height: 1.15;
+  color: rgba(255,255,255,0.88);
+  margin-bottom: 4px;
+}
+.iscene-title em { font-style:italic; color:var(--or-pale); }
+.iscene-line {
+  height: 1px;
+  background: linear-gradient(90deg,rgba(212,175,55,0.55),rgba(194,96,122,0.35),transparent);
+  margin: 17px 0; width: 72px;
+}
+#iscene-0 .iscene-line {
+  width: 90px; margin: 17px auto;
+  background: linear-gradient(90deg,transparent,rgba(212,175,55,0.6),transparent);
+}
+.iscene-tagline {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(17px,2.8vh,24px);
+  font-weight: 300; font-style: italic;
+  color: rgba(255,255,255,0.58); letter-spacing: 0.04em;
+}
+.iscene-sub {
+  font-size: 9px; letter-spacing: 0.28em;
+  color: rgba(255,255,255,0.20); text-transform: uppercase;
+  margin-top: 10px; margin-bottom: 22px;
+}
+.iscene-body {
+  font-size: clamp(13px,1.8vh,15px); line-height: 1.8;
+  color: rgba(255,255,255,0.45); max-width: 340px;
+}
+.iscene-pills {
+  display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px;
+}
+.iscene-pills span {
+  font-size: 11px; padding: 5px 13px;
+  border: 1px solid rgba(212,175,55,0.22);
+  border-radius: 99px; color: rgba(212,175,55,0.7);
+  letter-spacing: 0.04em;
+}
+
+/* Scroll cue */
+.intro-cue { display:inline-block; animation:icue 2.2s ease-in-out infinite; opacity:.7; }
+@keyframes icue { 0%,100%{transform:translateY(0);opacity:.5} 55%{transform:translateY(7px);opacity:.9} }
+
+/* CTA button */
+.intro-cta-btn {
+  display: inline-flex; align-items: center; gap: 14px;
+  padding: 18px 46px;
+  background: linear-gradient(135deg,rgba(212,175,55,0.18),rgba(212,175,55,0.10));
+  border: 1px solid rgba(212,175,55,0.45);
+  border-radius: 99px;
+  color: var(--or-blanc);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(18px,2.8vh,24px);
+  font-weight: 600; font-style: italic;
+  letter-spacing: 0.04em;
+  cursor: pointer; pointer-events: all;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 40px rgba(212,175,55,0.12);
+  margin-top: 22px;
+}
+.intro-cta-btn:hover {
+  background: linear-gradient(135deg,rgba(212,175,55,0.30),rgba(212,175,55,0.18));
+  border-color: var(--or);
+  box-shadow: 0 0 60px rgba(212,175,55,0.22);
+  transform: translateY(-2px);
+}
+.intro-cta-arrow { font-size:20px; transition:transform .3s; font-style:normal; }
+.intro-cta-btn:hover .intro-cta-arrow { transform:translateX(5px); }
+
+/* Progress dots */
+#intro-dots {
+  position: fixed; right: 26px; top: 50%;
+  transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 12px;
+  z-index: 200; opacity: 0; transition: opacity 0.5s;
+}
+#intro-dots.visible { opacity: 1; }
+.idot {
+  width: 5px; height: 5px; border-radius: 50%;
+  border: 1px solid rgba(212,175,55,0.35);
+  background: transparent; cursor: pointer;
+  transition: all 0.35s;
+}
+.idot.active {
+  background: var(--or-pale);
+  border-color: var(--or-pale);
+  transform: scale(1.6);
+  box-shadow: 0 0 6px rgba(212,175,55,0.5);
+}
+@media(max-width:768px){ #intro-dots { display:none; } }
 </style>
 </head>
 <body>
+
+<!-- ═══════════════════════════════════════════
+     INTRO SCROLL STORY
+═══════════════════════════════════════════ -->
+<div id="intro-story">
+  <div id="intro-sticky">
+    <div id="intro-aurora"></div>
+
+    <!-- ORB -->
+    <div id="intro-orb-stage">
+      <svg id="intro-orb-svg" viewBox="-220 -220 440 440" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="ig-core" cx="35%" cy="28%" r="72%" fx="35%" fy="28%">
+            <stop offset="0%"  stop-color="#D4AF37" stop-opacity="0.22"/>
+            <stop offset="50%" stop-color="#C2607A" stop-opacity="0.12"/>
+            <stop offset="78%" stop-color="#D4AF37" stop-opacity="0"/>
+          </radialGradient>
+          <filter id="ig-glow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="11" result="b"/>
+            <feColorMatrix in="b" type="matrix"
+              values="1 0 0 0 0.83  0 0 0 0 0.69  0 0 0 0 0.22  0 0 0 0.25 0"/>
+            <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <linearGradient id="ig-letter" gradientUnits="userSpaceOnUse" x1="-35" y1="-25" x2="35" y2="45">
+            <stop offset="0%"   stop-color="#7A5510"/>
+            <stop offset="30%"  stop-color="#D4AF37"/>
+            <stop offset="60%"  stop-color="#F7E080"/>
+            <stop offset="100%" stop-color="#D4AF37"/>
+          </linearGradient>
+        </defs>
+        <!-- Rings -->
+        <g id="ir5"><circle r="198" fill="none" stroke="rgba(212,175,55,0.05)" stroke-width="1"/>
+                    <circle r="198" fill="none" stroke="rgba(212,175,55,0.09)" stroke-width="0.5" stroke-dasharray="4 32"/></g>
+        <g id="ir4"><circle r="168" fill="none" stroke="rgba(194,96,122,0.07)" stroke-width="1"/>
+                    <circle r="168" fill="none" stroke="rgba(212,175,55,0.12)" stroke-width="0.5" stroke-dasharray="6 22"/></g>
+        <g id="ir3"><circle r="138" fill="none" stroke="rgba(212,175,55,0.12)" stroke-width="1"/>
+                    <circle r="138" fill="none" stroke="rgba(194,96,122,0.07)" stroke-width="0.5" stroke-dasharray="3 18"/></g>
+        <g id="ir2"><circle r="108" fill="none" stroke="rgba(212,175,55,0.19)" stroke-width="1.5"/>
+                    <circle r="108" fill="none" stroke="rgba(194,96,122,0.10)" stroke-width="0.5" stroke-dasharray="14 44"/></g>
+        <g id="ir1"><circle r="78"  fill="none" stroke="rgba(212,175,55,0.28)" stroke-width="1.5"/>
+                    <circle r="78"  fill="none" stroke="rgba(194,96,122,0.14)" stroke-width="0.5" stroke-dasharray="8 20"/></g>
+        <!-- Core -->
+        <circle id="iorb-bloom" r="74" fill="rgba(212,175,55,0.07)" filter="url(#ig-glow)"/>
+        <circle id="iorb-core"  r="74" fill="url(#ig-core)" stroke="rgba(212,175,55,0.18)" stroke-width="1"/>
+        <ellipse cx="-18" cy="-24" rx="26" ry="13" fill="rgba(255,255,255,0.14)"/>
+        <!-- Letter O -->
+        <text y="14" text-anchor="middle"
+          font-family="'Cormorant Garamond','Palatino Linotype',Georgia,serif"
+          font-size="82" font-weight="700" font-style="italic"
+          fill="url(#ig-letter)">O</text>
+        <!-- Tagline -->
+        <text y="48" text-anchor="middle"
+          font-family="'Jost',sans-serif"
+          font-size="7" font-weight="400" letter-spacing="3.5"
+          fill="rgba(212,175,55,0.28)">TON COACH IA</text>
+        <!-- Particles -->
+        <g id="iparts">
+          <circle cx="138" cy="0"    r="2.5" fill="rgba(212,175,55,0.45)"/>
+          <circle cx="-110" cy="-78" r="2"   fill="rgba(194,96,122,0.50)"/>
+          <circle cx="68"   cy="124" r="2"   fill="rgba(212,175,55,0.35)"/>
+          <circle cx="-132" cy="52"  r="2.5" fill="rgba(194,96,122,0.42)"/>
+          <circle cx="92"   cy="-108"r="2"   fill="rgba(212,175,55,0.50)"/>
+          <circle cx="-72"  cy="120" r="1.5" fill="rgba(194,96,122,0.34)"/>
+          <circle cx="162"  cy="-42" r="1.5" fill="rgba(212,175,55,0.30)"/>
+          <circle cx="-158" cy="-30" r="1.5" fill="rgba(194,96,122,0.30)"/>
+          <circle cx="0"    cy="-168"r="2"   fill="rgba(212,175,55,0.25)"/>
+          <circle cx="130"  cy="100" r="1.5" fill="rgba(194,96,122,0.28)"/>
+        </g>
+      </svg>
+    </div>
+
+    <!-- SCENE 0: HERO -->
+    <div id="iscene-0" class="iscene">
+      <div class="iscene-inner">
+        <p class="iscene-eyebrow">OSE Le Cercle · Coaching IA</p>
+        <h1 class="iscene-hero">ORIA</h1>
+        <div class="iscene-line"></div>
+        <p class="iscene-tagline">Ton coach IA · Disponible 24h/24</p>
+        <p class="iscene-sub">Scroll pour découvrir</p>
+        <div class="intro-cue">
+          <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+            <circle cx="17" cy="17" r="16" stroke="rgba(212,175,55,0.25)" stroke-width="1"/>
+            <path d="M17 11v8M13 16l4 5 4-5" stroke="rgba(212,175,55,0.65)"
+              stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCENE 1: TON ESPACE -->
+    <div id="iscene-1" class="iscene">
+      <div class="iscene-inner">
+        <p class="iscene-eyebrow">Ton espace</p>
+        <h2 class="iscene-title">Un espace rien<br>que pour <em>toi.</em></h2>
+        <div class="iscene-line"></div>
+        <p class="iscene-body">Disponible 24h/24, sans jugement, sans rendez-vous. Une présence profonde quand tu en as besoin.</p>
+      </div>
+    </div>
+
+    <!-- SCENE 2: 12 MODULES -->
+    <div id="iscene-2" class="iscene">
+      <div class="iscene-inner">
+        <p class="iscene-eyebrow">12 modules</p>
+        <h2 class="iscene-title">Chaque dimension<br>de ta <em>vie.</em></h2>
+        <div class="iscene-line"></div>
+        <div class="iscene-pills">
+          <span>Confiance</span><span>Relations</span><span>Émotions</span>
+          <span>Argent</span><span>Ambition</span><span>Corps</span>
+          <span>Identité</span><span>Séduction</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCENE 3: CTA -->
+    <div id="iscene-3" class="iscene">
+      <div class="iscene-inner" style="text-align:center;margin:0 auto">
+        <p class="iscene-eyebrow">Prête ?</p>
+        <h2 class="iscene-title" style="color:rgba(255,255,255,0.92)">Commence ton<br>parcours avec <em>ORIA.</em></h2>
+        <div class="iscene-line" style="margin:17px auto;background:linear-gradient(90deg,transparent,rgba(212,175,55,0.6),transparent)"></div>
+        <p class="iscene-body" style="max-width:340px;margin:0 auto">Inclus dans OSE Le Cercle · ou à partir de 9,99€/mois</p>
+        <button class="intro-cta-btn" onclick="launchApp()">
+          Commencer maintenant
+          <span class="intro-cta-arrow">→</span>
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /intro-sticky -->
+</div><!-- /intro-story -->
+
+<!-- Progress dots -->
+<div id="intro-dots">
+  <div class="idot active"></div>
+  <div class="idot"></div>
+  <div class="idot"></div>
+  <div class="idot"></div>
+</div>
+
 
 <!-- ═══════════════════════════════════════════════
      LOGIN OVERLAY
@@ -1355,26 +1721,141 @@ document.getElementById('userInput').addEventListener('keydown', function(e) {
   }
 });
 
-// ── Init ──────────────────────────────────────────────────────
-loadUserFromStorage();
-if (oriaUser?.userId) {
-  // Utilisatrice connue — accès direct
-  document.getElementById('loginOverlay').classList.add('hidden');
-  initSession();
-  updateTopbarUser();
-  newChat();
-} else {
-  // Afficher l'écran de login
-  document.getElementById('loginEmail')?.focus();
+// ── App init ──────────────────────────────────────────────────
+function initChatApp() {
+  loadUserFromStorage();
+  if (oriaUser?.userId) {
+    document.getElementById('loginOverlay').classList.add('hidden');
+    initSession();
+    updateTopbarUser();
+    newChat();
+  } else {
+    document.getElementById('loginEmail')?.focus();
+  }
+  document.getElementById('loginEmail')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleEmailLogin();
+  });
+  document.getElementById('loginPrenom')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') handlePrenomSubmit();
+  });
 }
 
-// Enter pour le login
-document.getElementById('loginEmail')?.addEventListener('keydown', e => {
-  if (e.key === 'Enter') handleEmailLogin();
-});
-document.getElementById('loginPrenom')?.addEventListener('keydown', e => {
-  if (e.key === 'Enter') handlePrenomSubmit();
-});
+// ── Launch app from intro ──────────────────────────────────────
+function launchApp() {
+  gsap.to('#intro-story', {
+    opacity: 0, duration: 0.7, ease: 'power2.inOut',
+    onComplete: () => {
+      const introEl = document.getElementById('intro-story');
+      const dotsEl  = document.getElementById('intro-dots');
+      if (introEl) introEl.remove();
+      if (dotsEl)  dotsEl.remove();
+      document.body.classList.remove('in-intro');
+      document.body.classList.add('in-chat');
+      sessionStorage.setItem('oria_intro_done', '1');
+      initChatApp();
+    }
+  });
+}
+
+// ── Intro scroll animation ─────────────────────────────────────
+function initIntroAnimation() {
+  gsap.registerPlugin(ScrollTrigger);
+
+  const orbStage = document.getElementById('intro-orb-stage');
+  const s0 = document.getElementById('iscene-0');
+  const s1 = document.getElementById('iscene-1');
+  const s2 = document.getElementById('iscene-2');
+  const s3 = document.getElementById('iscene-3');
+  const dotsWrap = document.getElementById('intro-dots');
+  const dots = document.querySelectorAll('.idot');
+
+  // Initial states
+  gsap.set(orbStage, { scale: 0, opacity: 0 });
+  gsap.set([s1, s2, s3], { opacity: 0, y: 28 });
+  const s0kids = ['#iscene-0 .iscene-eyebrow','#iscene-0 .iscene-hero',
+                   '#iscene-0 .iscene-line','#iscene-0 .iscene-tagline',
+                   '#iscene-0 .iscene-sub','#iscene-0 .intro-cue'];
+  gsap.set(s0kids, { opacity: 0, y: 18 });
+
+  // Orb entrance
+  gsap.to(orbStage, { scale:1, opacity:1, duration:2.0, ease:'power3.out', delay:0.3 });
+
+  // Scene 0 stagger
+  const il = gsap.timeline({ delay: 0.8 });
+  il.to('#iscene-0 .iscene-eyebrow', { opacity:1, y:0, duration:0.7, ease:'power2.out' })
+    .to('#iscene-0 .iscene-hero',    { opacity:1, y:0, duration:1.0, ease:'power3.out' }, '-=0.4')
+    .to('#iscene-0 .iscene-line',    { opacity:1, y:0, duration:0.7, ease:'power2.inOut' }, '-=0.5')
+    .to('#iscene-0 .iscene-tagline', { opacity:1, y:0, duration:0.7, ease:'power2.out' }, '-=0.3')
+    .to('#iscene-0 .iscene-sub',     { opacity:1, y:0, duration:0.55 }, '-=0.2')
+    .to('#iscene-0 .intro-cue',      { opacity:1, y:0, duration:0.55 }, '-=0.1');
+
+  // Show dots on scroll start
+  ScrollTrigger.create({
+    trigger: '#intro-story',
+    start: 'top top',
+    onEnter:     () => dotsWrap.classList.add('visible'),
+    onLeaveBack: () => dotsWrap.classList.remove('visible'),
+  });
+
+  // Main scroll timeline
+  const tl = gsap.timeline({
+    scrollTrigger: {
+      trigger: '#intro-story',
+      start: 'top top',
+      end: 'bottom bottom',
+      scrub: 1.8,
+      onUpdate: (self) => {
+        const p = self.progress;
+        let idx = p > 0.78 ? 3 : p > 0.50 ? 2 : p > 0.24 ? 1 : 0;
+        dots.forEach((d,i) => d.classList.toggle('active', i===idx));
+      }
+    }
+  });
+
+  tl
+    // 0→0.24: hold scene 0
+    .to({}, { duration: 0.24 }, 0)
+    // 0.24→0.38: scene 0→1, orb scale up
+    .to(s0,       { opacity:0, y:-24, duration:0.14 }, 0.24)
+    .to(orbStage, { scale:1.10, duration:0.20 },        0.26)
+    .to(s1,       { opacity:1, y:0,   duration:0.15 }, 0.32)
+    // 0.38→0.50: hold scene 1
+    .to({}, { duration: 0.12 }, 0.38)
+    // 0.50→0.64: scene 1→2, orb shifts
+    .to(s1,       { opacity:0, y:-20, duration:0.13 }, 0.50)
+    .to(orbStage, { x:'12%', scale:1.04, duration:0.22 }, 0.50)
+    .to(s2,       { opacity:1, y:0,   duration:0.15 }, 0.58)
+    // 0.64→0.78: hold scene 2
+    .to({}, { duration: 0.13 }, 0.64)
+    // 0.78→0.92: scene 2→3, orb back to center
+    .to(s2,       { opacity:0, y:-20, duration:0.13 }, 0.78)
+    .to(orbStage, { x:'0%', scale:0.92, duration:0.22 }, 0.78)
+    .to(s3,       { opacity:1, y:0,   duration:0.15 }, 0.86)
+    // 0.92→1.00: hold scene 3 with CTA
+    .to({}, { duration: 0.08 }, 0.92);
+}
+
+// ── Bootstrap ─────────────────────────────────────────────────
+(function() {
+  const alreadySeen = sessionStorage.getItem('oria_intro_done');
+  loadUserFromStorage();
+  const loggedIn = !!oriaUser?.userId;
+
+  if (alreadySeen && loggedIn) {
+    // Skip intro for logged-in returning users
+    const introEl = document.getElementById('intro-story');
+    const dotsEl  = document.getElementById('intro-dots');
+    if (introEl) introEl.remove();
+    if (dotsEl)  dotsEl.remove();
+    document.body.classList.add('in-chat');
+    initChatApp();
+  } else {
+    // Show intro
+    document.body.classList.add('in-intro');
+    document.getElementById('loginOverlay').classList.add('hidden');
+    initIntroAnimation();
+  }
+})();
 </script>
 
 <style>
